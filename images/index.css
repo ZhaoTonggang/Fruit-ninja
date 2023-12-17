@@ -1,19 +1,20 @@
 /* {include ../../system/css/reset.css} */
 /* {include ../../system/css/common.css} */
-
-html, body{
+html,
+body {
 	width: 100%;
 	height: 100%;
-}
-
-body{
-	position: relative;
 	margin: 0;
-	background: #484848 url('./sgrz.jpg') center no-repeat;
-	background-size: cover;
+	padding: 0;
 }
 
-#extra, #view{
+body {
+	position: fixed;
+	background: #484848 url('./sgrz.jpg') no-repeat center/cover;
+}
+
+#extra,
+#view {
 	position: absolute;
 	left: 50%;
 	top: 50%;
@@ -24,18 +25,18 @@ body{
 	background: #fff;
 }
 
-#view{
+#view {
 	display: block;
 	background: transparent url('./blank.gif') repeat 0 0;
 	cursor: default;
 	z-index: 20;
 }
 
-#extra{
+#extra {
 	background: #000;
 }
 
-#extra .layer{
+#extra .layer {
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -44,7 +45,7 @@ body{
 	z-index: 10;
 }
 
-#fork{
+#fork {
 	display: block;
 	position: absolute;
 	right: 0;
@@ -56,7 +57,7 @@ body{
 	z-index: 0;
 }
 
-#desc{
+#desc {
 	width: 100%;
 	position: absolute;
 	left: 0;
@@ -69,16 +70,16 @@ body{
 	font-size: 14px;
 }
 
-#desc a{
+#desc a {
 	color: #318fe1;
 }
 
-#browser{
+#browser {
 	font-size: 14px;
 	line-height: 16px;
 }
 
-#browser .b{
+#browser .b {
 	color: #fff;
 	font-weight: 700;
 }

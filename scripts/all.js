@@ -4,19 +4,18 @@
  * @author dron
  * @site http://ucren.com
  */
-
 void
 
-function (global) {
+function(global) {
 	var mapping = {},
 		cache = {};
-	global.startModule = function (m) {
+	global.startModule = function(m) {
 		require(m).start();
 	};
-	global.define = function (id, func) {
+	global.define = function(id, func) {
 		mapping[id] = func;
 	};
-	global.require = function (id) {
+	global.require = function(id) {
 		if (!/\.js$/.test(id))
 			id += '.js';
 		if (cache[id])
@@ -29,21 +28,17 @@ function (global) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\collide.js
  */
-define("scripts/collide.js", function (exports) {
+define("scripts/collide.js", function(exports) {
 	var fruit = require("scripts/factory/fruit");
 	var Ucren = require("scripts/lib/ucren");
-
 	var fruits = fruit.getFruitInView();
-
 	/**
 	 * 碰撞检测
 	 */
-
-	exports.check = function (knife) {
+	exports.check = function(knife) {
 		var ret = [],
 			index = 0;
-
-		fruits.forEach(function (fruit) {
+		fruits.forEach(function(fruit) {
 			var ck = lineInEllipse(
 				knife.slice(0, 2),
 				knife.slice(2, 4),
@@ -66,14 +61,12 @@ define("scripts/collide.js", function (exports) {
 
 	function equation12(a, b, c) {
 		if (a == 0) return;
-
 		var delta = b * b - 4 * a * c;
 		if (delta == 0)
 			return [-1 * b / (2 * a), -1 * b / (2 * a)];
 		else if (delta > 0)
 			return [(-1 * b + Math.sqrt(delta)) / (2 * a), (-1 * b - Math.sqrt(delta)) / (2 * a)];
 	}
-
 	// 返回线段和椭圆的两个交点，如果不相交，返回 null
 	function lineXEllipse(p1, p2, c, r, e) {
 		// 线段：p1, p2    圆心：c    半径：r    离心率：e
@@ -82,106 +75,81 @@ define("scripts/collide.js", function (exports) {
 		var t1 = r,
 			t2 = r * e,
 			k;
-
 		a = sqr(t2) * sqr(p1[0] - p2[0]) + sqr(t1) * sqr(p1[1] - p2[1]);
-
 		if (a <= 0) return;
-
 		b = 2 * sqr(t2) * (p2[0] - p1[0]) * (p1[0] - c[0]) + 2 * sqr(t1) * (p2[1] - p1[1]) * (p1[1] - c[1]);
 		c = sqr(t2) * sqr(p1[0] - c[0]) + sqr(t1) * sqr(p1[1] - c[1]) - sqr(t1) * sqr(t2);
-
 		if (!(k = equation12(a, b, c, t1, t2))) return;
-
 		var result = [
 			[p1[0] + k[0] * (p2[0] - p1[0]), p1[1] + k[0] * (p2[1] - p1[1])],
 			[p1[0] + k[1] * (p2[0] - p1[0]), p1[1] + k[1] * (p2[1] - p1[1])]
 		];
-
 		if (!((sign(result[0][0] - p1[0]) * sign(result[0][0] - p2[0]) <= 0) &&
 				(sign(result[0][1] - p1[1]) * sign(result[0][1] - p2[1]) <= 0)))
 			result[0] = null;
-
 		if (!((sign(result[1][0] - p1[0]) * sign(result[1][0] - p2[0]) <= 0) &&
 				(sign(result[1][1] - p1[1]) * sign(result[1][1] - p2[1]) <= 0)))
 			result[1] = null;
-
 		return result;
 	}
-
 	// 判断计算线段和椭圆是否相交
 	function lineInEllipse(p1, p2, c, r, e) {
 		var t = lineXEllipse(p1, p2, c, r, e);
 		return t && (t[0] || t[1]);
 	};
-
 	return exports;
 });
-
 
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\control.js
  */
-define("scripts/control.js", function (exports) {
+define("scripts/control.js", function(exports) {
 	var Ucren = require("scripts/lib/ucren");
 	var knife = require("scripts/object/knife");
 	var message = require("scripts/message");
 	var state = require("scripts/state");
-
 	var canvasLeft, canvasTop;
-
 	canvasLeft = canvasTop = 0;
-
-	exports.init = function () {
+	exports.init = function() {
 		this.fixCanvasPos();
 		this.installDragger();
 		this.installClicker();
 	};
-
-	exports.installDragger = function () {
+	exports.installDragger = function() {
 		var dragger = new Ucren.BasicDrag({
 			type: "calc"
 		});
-
-		dragger.on("returnValue", function (dx, dy, x, y, kf) {
+		dragger.on("returnValue", function(dx, dy, x, y, kf) {
 			if (kf = knife.through(x - canvasLeft, y - canvasTop))
 				message.postMessage(kf, "slice");
 		});
-
-		dragger.on("startDrag", function () {
+		dragger.on("startDrag", function() {
 			knife.newKnife();
 		});
-
 		dragger.bind(document.documentElement);
 	};
-
-	exports.installClicker = function () {
-		Ucren.addEvent(document, "click", function () {
+	exports.installClicker = function() {
+		Ucren.addEvent(document, "click", function() {
 			if (state("click-enable").ison())
 				message.postMessage("click");
 		});
 	};
-
-	exports.fixCanvasPos = function () {
+	exports.fixCanvasPos = function() {
 		var de = document.documentElement;
-
-		var fix = function (e) {
+		var fix = function(e) {
 			canvasLeft = (de.clientWidth - 640) / 2;
 			canvasTop = (de.clientHeight - 480) / 2 - 40;
 		};
-
 		fix();
-
 		Ucren.addEvent(window, "resize", fix);
 	};;
-
 	return exports;
 });
-
 
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\game.js
  */
-define("scripts/game.js", function (exports) {
+define("scripts/game.js", function(exports) {
 	/**
 	 * game logic
 	 */
@@ -198,73 +166,57 @@ define("scripts/game.js", function (exports) {
 	// var sence = require("scripts/sence");
 	var background = require("scripts/object/background");
 	var light = require("scripts/object/light");
-
 	var scoreNumber = 0;
-
 	var random = Ucren.randomNumber;
-
 	var volleyNum = 2,
 		volleyMultipleNumber = 5;
 	var fruits = [];
 	var gameInterval;
-
 	var snd;
 	var boomSnd;
-
 	// fruit barbette
-	var barbette = function () {
+	var barbette = function() {
 		if (fruits.length >= volleyNum)
 			return;
-
 		var startX = random(640),
 			endX = random(640),
 			startY = 600;
 		var f = fruit.create(startX, startY).shotOut(0, endX);
-
 		fruits.push(f);
 		snd.play();
-
 		barbette();
 	};
-
 	// start game
-	exports.start = function () {
+	exports.start = function() {
 		snd = sound.create("sound/throw");
 		boomSnd = sound.create("sound/boom");
-		timeline.setTimeout(function () {
+		timeline.setTimeout(function() {
 			state("game-state").set("playing");
 			gameInterval = timeline.setInterval(barbette, 1e3);
 		}, 500);
 	};
-
-	exports.gameOver = function () {
+	exports.gameOver = function() {
 		state("game-state").set("over");
 		gameInterval.stop();
-
 		gameOver.show();
 		// timeline.setTimeout(function(){
 		//     // sence.switchSence( "home-menu" );
 		//     // TODO: require 出现互相引用时，造成死循环，这个问题需要跟进，这里暂时用 postMessage 代替
 		//     message.postMessage( "home-menu", "sence.switchSence" );
 		// }, 2000);
-
 		scoreNumber = 0;
 		volleyNum = 2;
 		fruits.length = 0;
 	};
-
-	exports.applyScore = function (score) {
+	exports.applyScore = function(score) {
 		if (score > volleyNum * volleyMultipleNumber)
 			volleyNum++,
 			volleyMultipleNumber += 50;
 	};
-
-	exports.sliceAt = function (fruit, angle) {
+	exports.sliceAt = function(fruit, angle) {
 		var index;
-
 		if (state("game-state").isnot("playing"))
 			return;
-
 		if (fruit.type != "boom") {
 			fruit.broken(angle);
 			if (index = fruits.indexOf(fruit))
@@ -278,66 +230,55 @@ define("scripts/game.js", function (exports) {
 			light.start(fruit);
 		}
 	};
-
-	exports.pauseAllFruit = function () {
+	exports.pauseAllFruit = function() {
 		gameInterval.stop();
 		knife.pause();
 		fruits.invoke("pause");
 	};
-
 	// message.addEventListener("fruit.fallOff", function( fruit ){
 	// 	var index;
 	// 	if( ( index = fruits.indexOf( fruit ) ) > -1 )
 	// 	    fruits.splice( index, 1 );
 	// });
-
-	message.addEventListener("fruit.remove", function (fruit) {
+	message.addEventListener("fruit.remove", function(fruit) {
 		var index;
 		if ((index = fruits.indexOf(fruit)) > -1)
 			fruits.splice(index, 1);
 	});
-
-	message.addEventListener("fruit.fallOutOfViewer", function (fruit) {
+	message.addEventListener("fruit.fallOutOfViewer", function(fruit) {
 		if (state("game-state").isnot("playing"))
 			return;
 
 		if (fruit.type != "boom")
 			lose.showLoseAt(fruit.originX);
 	});
-
-	message.addEventListener("game.over", function () {
+	message.addEventListener("game.over", function() {
 		exports.gameOver();
 		knife.switchOn();
 	});
-
-	message.addEventListener("overWhiteLight.show", function () {
+	message.addEventListener("overWhiteLight.show", function() {
 		knife.endAll();
 		for (var i = fruits.length - 1; i >= 0; i--)
 			fruits[i].remove();
 		background.stop();
 	});
-
-	message.addEventListener("click", function () {
+	message.addEventListener("click", function() {
 		state("click-enable").off();
 		gameOver.hide();
 		message.postMessage("home-menu", "sence.switchSence");
 	});;
-
 	return exports;
 });
-
 
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\layer.js
  */
-define("scripts/layer.js", function (exports) {
+define("scripts/layer.js", function(exports) {
 	/**
 	 * layer manager
 	 */
-
 	var Raphael = require("scripts/lib/raphael");
 	var Ucren = require("scripts/lib/ucren");
-
 	var layers = {};
 	var zindexs = {
 		"default": zi(),
@@ -348,18 +289,14 @@ define("scripts/layer.js", function (exports) {
 		"flash": zi(),
 		"mask": zi()
 	};
-
-	exports.createImage = function (layer, src, x, y, w, h) {
+	exports.createImage = function(layer, src, x, y, w, h) {
 		layer = this.getLayer(layer);
 		return layer.image(src, x, y, w, h);
 	};
-
-	exports.createText = function (layer, text, x, y, fill, size) {
+	exports.createText = function(layer, text, x, y, fill, size) {
 		layer = this.getLayer(layer);
-
 		if (Ucren.isIe)
 			y += 2;
-
 		return layer.text(x, y, text).attr({
 			fill: fill || "#fff",
 			"font-size": size || "14px",
@@ -367,11 +304,9 @@ define("scripts/layer.js", function (exports) {
 			"text-anchor": "start"
 		});
 	};
-
-	exports.getLayer = function (name) {
+	exports.getLayer = function(name) {
 		var p, layer;
 		name = name || "default";
-
 		if (p = layers[name]) {
 			return p;
 		} else {
@@ -390,15 +325,13 @@ define("scripts/layer.js", function (exports) {
 	function zi() {
 		return zi.num = ++zi.num || 2;
 	};
-
 	return exports;
 });
-
 
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\main.js
  */
-define("scripts/main.js", function (exports) {
+define("scripts/main.js", function(exports) {
 	var timeline = require("scripts/timeline");
 	var tools = require("scripts/tools");
 	var sence = require("scripts/sence");
@@ -408,34 +341,27 @@ define("scripts/main.js", function (exports) {
 	var csl = require("scripts/object/console");
 	var message = require("scripts/message");
 	var state = require("scripts/state");
-
 	var game = require("scripts/game");
-
 	var collide = require("scripts/collide");
-
 	var setTimeout = timeline.setTimeout.bind(timeline);
-
-	var log = function () {
+	var log = function() {
 		var time = 1e3,
 			add = 300,
 			fn;
-		fn = function (text) {
-			setTimeout(function () {
+		fn = function(text) {
+			setTimeout(function() {
 				csl.log(text);
 			}, time);
 			time += add;
 		};
-		fn.clear = function () {
+		fn.clear = function() {
 			setTimeout(csl.clear.bind(csl), time);
 			time += add;
 		};
 		return fn;
 	}();
-
-	exports.start = function () {
-
+	exports.start = function() {
 		[timeline, sence, control].invoke("init");
-
 		log("正在加载鼠标控制脚本");
 		log("正在加载图像资源");
 		log("正在加载游戏脚本");
@@ -443,30 +369,24 @@ define("scripts/main.js", function (exports) {
 		log("正在初始化");
 		log("正在启动游戏...");
 		log.clear();
-
 		setTimeout(sence.switchSence.saturate(sence, "home-menu"), 3000);
 	};
-
-	message.addEventListener("slice", function (knife) {
+	message.addEventListener("slice", function(knife) {
 		var fruits = collide.check(knife),
 			angle;
 		if (fruits.length)
 			angle = tools.getAngleByRadian(tools.pointToRadian(knife.slice(0, 2), knife.slice(2, 4))),
-			fruits.forEach(function (fruit) {
+			fruits.forEach(function(fruit) {
 				message.postMessage(fruit, angle, "slice.at");
 			});
 	});
-
-	message.addEventListener("slice.at", function (fruit, angle) {
-
+	message.addEventListener("slice.at", function(fruit, angle) {
 		if (state("sence-state").isnot("ready"))
 			return;
-
 		if (state("sence-name").is("game-body")) {
 			game.sliceAt(fruit, angle);
 			return;
 		}
-
 		if (state("sence-name").is("home-menu")) {
 			fruit.broken(angle);
 			if (fruit.isHomeMenu)
@@ -484,128 +404,103 @@ define("scripts/main.js", function (exports) {
 			return;
 		}
 	});
-
 	var tip = "";
-
 	if (!Ucren.isChrome)
 		tip = "$为了获得最佳流畅度，推荐您使用 <span class='b'>Google Chrome</span> 体验本游戏";
-
 	if (!buzz.isSupported())
 		tip = tip.replace("$", "您的浏览器不支持 &lt;audio&gt 播放声效，且");
-
 	tip = tip.replace("$", "");
-
 	Ucren.Element("browser").html(tip);;
-
 	return exports;
 });
-
 
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\message.js
  */
-define("scripts/message.js", function (exports) {
+define("scripts/message.js", function(exports) {
 	/**
 	 * a simple message manager
 	 * @author dron
 	 * @date 2012-06-27
 	 */
-
 	var Ucren = require("scripts/lib/ucren");
-
 	/**
 	 * send a message
 	 * @param  {Any} message,message...		message contents
 	 * @param  {String} to 					message address
 	 */
-	exports.postMessage = function (message /*, message, message... */ , to) {
+	exports.postMessage = function(message /*, message, message... */ , to) {
 		var messages = [].slice.call(arguments, 0),
 			splitIndex = messages.length - 1;
-
 		to = messages[splitIndex];
 		messages.slice(0, splitIndex);
-
 		Ucren.dispatch(to, messages);
 	};
-
 	/**
 	 * bind an message handler
 	 * @param {String}   from 	message address
 	 * @param {Function} fn 	message handler
 	 */
-	exports.addEventListener = function (from, fn) {
+	exports.addEventListener = function(from, fn) {
 		Ucren.dispatch(from, fn);
 	};
-
 	return exports;
 });
-
 
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\sence.js
  */
-define("scripts/sence.js", function (exports) {
+define("scripts/sence.js", function(exports) {
 	var Ucren = require("scripts/lib/ucren");
 	var sound = require("scripts/lib/sound");
 	var fruit = require("scripts/factory/fruit");
 	var flash = require("scripts/object/flash");
-
 	var state = require("scripts/state");
 	var message = require("scripts/message");
-
 	// the fixed elements
 	var background = require("scripts/object/background");
 	var fps = require("scripts/object/fps");
-
 	// the home page elements
 	var homeMask = require("scripts/object/home-mask");
 	var logo = require("scripts/object/logo");
 	var ninja = require("scripts/object/ninja")
 	var homeDesc = require("scripts/object/home-desc");
-
 	var dojo = require("scripts/object/dojo");
 	var newGame = require("scripts/object/new-game");
 	var quit = require("scripts/object/quit");
 	var newSign = require("scripts/object/new");
 	var peach, sandia, boom;
-
 	// the elements in game body
 	var score = require("scripts/object/score");
 	var lose = require("scripts/object/lose");
-
 	// the game logic
 	var game = require("scripts/game");
-
 	// the elements in 'developing' module
 	var developing = require("scripts/object/developing");
 	var gameOver = require("scripts/object/game-over");
-
 	// commons
 	var message = require("scripts/message");
 	var timeline = require("scripts/timeline");
 	var setTimeout = timeline.setTimeout.bind(timeline);
 	var setInterval = timeline.setInterval.bind(timeline);
-
 	var menuSnd;
 	var gameStartSnd;
-
 	// initialize sence
-	exports.init = function () {
+	exports.init = function() {
 		menuSnd = sound.create("sound/menu");
 		gameStartSnd = sound.create("sound/start");
-		[background, homeMask, logo, ninja, homeDesc, dojo, newSign, newGame, quit, score, lose, developing, gameOver, flash, fps].invoke("set");
+		[background, homeMask, logo, ninja, homeDesc, dojo, newSign, newGame, quit, score, lose, developing,
+			gameOver, flash, fps
+		].invoke("set");
 		setInterval(fps.update.bind(fps), 500);
 	};
-
 	// switch sence
-	exports.switchSence = function (name) {
+	exports.switchSence = function(name) {
 		var curSence = state("sence-name");
 		var senceState = state("sence-state");
-
 		if (curSence.is(name))
 			return;
-
-		var onHide = function () {
+		var onHide = function() {
 			curSence.set(name);
 			senceState.set("entering");
 			switch (name) {
@@ -623,26 +518,22 @@ define("scripts/sence.js", function (exports) {
 					break;
 			}
 		}.bind(this);
-
-		var onShow = function () {
+		var onShow = function() {
 			senceState.set("ready");
 
 			if (name == "dojo-body" || name == "quit-body") {
 				exports.switchSence("home-menu");
 			}
 		};
-
 		senceState.set("exiting");
-
 		if (curSence.isunset()) onHide();
 		else if (curSence.is("home-menu")) this.hideMenu(onHide);
 		else if (curSence.is("dojo-body")) this.hideDojo(onHide);
 		else if (curSence.is("game-body")) this.hideNewGame(onHide);
 		else if (curSence.is("quit-body")) this.hideQuit(onHide);
 	};
-
 	// to enter home page menu
-	exports.showMenu = function (callback) {
+	exports.showMenu = function(callback) {
 		var callee = arguments.callee;
 		var times = callee.times = ++callee.times || 1;
 
@@ -650,7 +541,7 @@ define("scripts/sence.js", function (exports) {
 		sandia = fruit.create("sandia", 330, 322, true);
 		boom = fruit.create("boom", 552, 367, true, 2500);
 
-		[peach, sandia, boom].forEach(function (f) {
+		[peach, sandia, boom].forEach(function(f) {
 			f.isHomeMenu = 1;
 		});
 		peach.isDojoIcon = sandia.isNewGameIcon = boom.isQuitIcon = 1;
@@ -681,7 +572,7 @@ define("scripts/sence.js", function (exports) {
 	};
 
 	// to exit home page menu
-	exports.hideMenu = function (callback) {
+	exports.hideMenu = function(callback) {
 		[newSign, dojo, newGame, quit].invoke("hide");
 		[homeMask, logo, ninja, homeDesc].invoke("hide");
 		[peach, sandia, boom].invoke("fallOff", 150);
@@ -691,7 +582,7 @@ define("scripts/sence.js", function (exports) {
 	};
 
 	// to enter game body
-	exports.showNewGame = function (callback) {
+	exports.showNewGame = function(callback) {
 		score.show();
 		lose.show();
 		game.start();
@@ -701,7 +592,7 @@ define("scripts/sence.js", function (exports) {
 	};
 
 	// to exit game body
-	exports.hideNewGame = function (callback) {
+	exports.hideNewGame = function(callback) {
 		score.hide();
 		lose.hide();
 
@@ -710,30 +601,30 @@ define("scripts/sence.js", function (exports) {
 	};
 
 	// to enter dojo mode
-	exports.showDojo = function (callback) {
+	exports.showDojo = function(callback) {
 		developing.show(250);
 		setTimeout(callback, 1500);
 	};
 
 	// to exit dojo mode
-	exports.hideDojo = function (callback) {
+	exports.hideDojo = function(callback) {
 		// TODO: 
 		setTimeout(callback, 1000);
 	};
 
 	// to enter quit page
-	exports.showQuit = function (callback) {
+	exports.showQuit = function(callback) {
 		developing.show(250);
 		setTimeout(callback, 1500);
 	};
 
 	// to exit quit page
-	exports.hideQuit = function (callback) {
+	exports.hideQuit = function(callback) {
 		// TODO: 
 		setTimeout(callback, 1000);
 	};
 
-	message.addEventListener("sence.switchSence", function (name) {
+	message.addEventListener("sence.switchSence", function(name) {
 		exports.switchSence(name);
 	});;
 
@@ -744,7 +635,7 @@ define("scripts/sence.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\state.js
  */
-define("scripts/state.js", function (exports) {
+define("scripts/state.js", function(exports) {
 	/**
 	 * a simple state manager
 	 * @author 	dron
@@ -769,55 +660,55 @@ define("scripts/state.js", function (exports) {
 	var stack = {};
 	var cache = {};
 
-	exports = function (key) {
+	exports = function(key) {
 
 		if (cache[key])
 			return cache[key];
 
 		return cache[key] = {
-			is: function (value) {
+			is: function(value) {
 				return stack[key] === value;
 			},
 
-			isnot: function (value) {
+			isnot: function(value) {
 				return stack[key] !== value;
 			},
 
-			ison: function () {
+			ison: function() {
 				return this.is(true);
 			},
 
-			isoff: function () {
+			isoff: function() {
 				return this.isnot(true);
 			},
 
-			isunset: function () {
+			isunset: function() {
 				return this.is(undefined);
 			},
 
-			set: function (value) {
+			set: function(value) {
 				return stack[key] = value;
 			},
 
-			get: function () {
+			get: function() {
 				return stack[key];
 			},
 
-			on: function () {
+			on: function() {
 				var me = this;
 				me.set(true);
 				return {
-					keep: function (time) {
+					keep: function(time) {
 						timeline.setTimeout(me.set.saturate(me, false), time);
 					}
 				}
 			},
 
-			off: function () {
+			off: function() {
 				var me = this;
 				me.set(false);
 				return {
-					keep: function (time) {
+					keep: function(time) {
 						timeline.setTimeout(me.set.saturate(me, true), time);
 					}
 				}
@@ -832,7 +723,7 @@ define("scripts/state.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\timeline.js
  */
-define("scripts/timeline.js", function (exports) {
+define("scripts/timeline.js", function(exports) {
 	/**
 	 * a easy timeline manager
 	 * @version 0.9
@@ -844,7 +735,7 @@ define("scripts/timeline.js", function (exports) {
 	/**
 	 * initialize timeline
 	 */
-	exports.init = function () {
+	exports.init = function() {
 		var me = this;
 		me.startTime = now();
 		me.count = 0;
@@ -862,7 +753,7 @@ define("scripts/timeline.js", function (exports) {
 		// if( Ucren.isSafari )
 		//     time = 10;
 
-		setInterval(function () {
+		setInterval(function() {
 			me.count++;
 			update(now());
 		}, time);
@@ -873,7 +764,7 @@ define("scripts/timeline.js", function (exports) {
 	 * @param  {Object} conf 	the config
 	 * @return {Task} 			a task instance
 	 */
-	exports.createTask = function (conf) {
+	exports.createTask = function(conf) {
 		/* e.g. createTask({
 			start: 500, duration: 2000, data: [a, b, c,..],
 			object: module, onTimeUpdate: fn(time, a, b, c,..), onTimeStart: fn(a, b, c,..), onTimeEnd: fn(a, b, c,..),
@@ -895,9 +786,9 @@ define("scripts/timeline.js", function (exports) {
 	 * @param  {Task} task 		a task instance		
 	 * @return {Array}			this queue
 	 */
-	exports.taskList = function (queue, task) {
+	exports.taskList = function(queue, task) {
 		if (!queue.clear)
-			queue.clear = function () {
+			queue.clear = function() {
 				for (var task, i = this.length - 1; i >= 0; i--)
 					task = this[i],
 					task.stop(),
@@ -916,7 +807,7 @@ define("scripts/timeline.js", function (exports) {
 	 * @param {Function} fn 	callback function
 	 * @param {Number}   time 	time, unit: ms
 	 */
-	exports.setTimeout = function (fn, time) {
+	exports.setTimeout = function(fn, time) {
 		// e.g. setTimeout(fn, time);
 		return this.createTask({
 			start: time,
@@ -930,11 +821,11 @@ define("scripts/timeline.js", function (exports) {
 	 * @param {Function} fn 	callback function
 	 * @param {Number}   time 	time, unit: ms
 	 */
-	exports.setInterval = function (fn, time) {
+	exports.setInterval = function(fn, time) {
 		// e.g. setInterval(fn, time);
 		var timer = setInterval(fn, time);
 		return {
-			stop: function () {
+			stop: function() {
 				clearInterval(timer);
 			}
 		};
@@ -944,7 +835,7 @@ define("scripts/timeline.js", function (exports) {
 	 * get the current fps
 	 * @return {Number} fps number
 	 */
-	exports.getFPS = function () {
+	exports.getFPS = function() {
 		var t = now(),
 			fps = this.count / (t - this.startTime) * 1e3;
 		if (this.count > 1e3)
@@ -962,7 +853,7 @@ define("scripts/timeline.js", function (exports) {
 		addingTasks = [],
 		adding = 0;
 
-	var now = function () {
+	var now = function() {
 		return new Date().getTime();
 	};
 
@@ -976,7 +867,7 @@ define("scripts/timeline.js", function (exports) {
 	// 		};
 	// }( window );
 
-	var createTask = function (conf) {
+	var createTask = function(conf) {
 		var object = conf.object || {};
 		conf.start = conf.start || 0;
 		return {
@@ -988,19 +879,19 @@ define("scripts/timeline.js", function (exports) {
 			onTimeStart: conf.onTimeStart || object.onTimeStart || Ucren.nul,
 			onTimeUpdate: conf.onTimeUpdate || object.onTimeUpdate || Ucren.nul,
 			onTimeEnd: conf.onTimeEnd || object.onTimeEnd || Ucren.nul,
-			stop: function () {
+			stop: function() {
 				this.stopped = 1;
 			}
 		}
 	};
 
-	var updateTask = function (task, time) {
+	var updateTask = function(task, time) {
 		var data = task.data;
 		data[0] = time;
 		task.onTimeUpdate.apply(task.object, data);
 	};
 
-	var checkStartTask = function (task) {
+	var checkStartTask = function(task) {
 		if (!task.started) {
 			task.started = 1;
 			task.onTimeStart.apply(task.object, task.data.slice(1));
@@ -1008,7 +899,7 @@ define("scripts/timeline.js", function (exports) {
 		}
 	};
 
-	var update = function (time) {
+	var update = function(time) {
 		var i = tasks.length,
 			t, task, start, duration, data;
 
@@ -1050,18 +941,18 @@ define("scripts/timeline.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\tools.js
  */
-define("scripts/tools.js", function (exports) {
-	exports.unsetObject = function (object) {
+define("scripts/tools.js", function(exports) {
+	exports.unsetObject = function(object) {
 		for (var i in object)
 			if (object.hasOwnProperty(i) && typeof object[i] == "function")
-				object[i] = function () {};
+				object[i] = function() {};
 	};
 
-	exports.getAngleByRadian = function (radian) {
+	exports.getAngleByRadian = function(radian) {
 		return radian * 180 / Math.PI;
 	}
 
-	exports.pointToRadian = function (origin, point) {
+	exports.pointToRadian = function(origin, point) {
 		var PI = Math.PI;
 
 		if (point[0] === origin[0]) {
@@ -1092,7 +983,7 @@ define("scripts/tools.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\factory\displacement.js
  */
-define("scripts/factory/displacement.js", function (exports) {
+define("scripts/factory/displacement.js", function(exports) {
 	var layer = require("scripts/layer");
 	var timeline = require("scripts/timeline");
 	var tween = require("scripts/lib/tween");
@@ -1101,7 +992,7 @@ define("scripts/factory/displacement.js", function (exports) {
 	 * 位移类模块模型
 	 */
 
-	exports.create = function (imageSrc, width, height, origX, origY, targetX, targetY, animMap, animDur) {
+	exports.create = function(imageSrc, width, height, origX, origY, targetX, targetY, animMap, animDur) {
 		var module = {};
 		var image;
 
@@ -1112,7 +1003,7 @@ define("scripts/factory/displacement.js", function (exports) {
 		else
 			anim = animMap;
 
-		var createTask = function (start, duration, sx, sy, ex, ey, anim, mode) {
+		var createTask = function(start, duration, sx, sy, ex, ey, anim, mode) {
 			timeline.createTask({
 				start: start,
 				duration: duration,
@@ -1127,31 +1018,31 @@ define("scripts/factory/displacement.js", function (exports) {
 
 		module.anims = [];
 
-		module.set = function () {
+		module.set = function() {
 			image = layer.createImage("default", imageSrc, origX, origY, width, height);
 		};
 
-		module.show = function (start) {
+		module.show = function(start) {
 			createTask(start, animDur, origX, origY, targetX, targetY, anim.show, "show");
 		};
 
-		module.hide = function () {
+		module.hide = function() {
 			this.anims.clear();
 			createTask(0, animDur, targetX, targetY, origX, origY, anim.hide, "hide");
 		};
 
-		module.onTimeUpdate = function (time, sx, sy, ex, ey, anim) {
+		module.onTimeUpdate = function(time, sx, sy, ex, ey, anim) {
 			image.attr({
 				x: anim(time, sx, ex - sx, animDur),
 				y: anim(time, sy, ey - sy, animDur)
 			});
 		};
 
-		module.onTimeStart = function () {
+		module.onTimeStart = function() {
 
 		};
 
-		module.onTimeEnd = function (sx, sy, ex, ey, anim) {
+		module.onTimeEnd = function(sx, sy, ex, ey, anim) {
 			if (anim === "hide")
 				image.hide();
 		};
@@ -1166,7 +1057,7 @@ define("scripts/factory/displacement.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\factory\fruit.js
  */
-define("scripts/factory/fruit.js", function (exports) {
+define("scripts/factory/fruit.js", function(exports) {
 	var layer = require("scripts/layer");
 	var Ucren = require("scripts/lib/ucren");
 	var timeline = require("scripts/timeline");
@@ -1191,7 +1082,7 @@ define("scripts/factory/fruit.js", function (exports) {
 
 	var random = Ucren.randomNumber;
 	var min = Math.min;
-	var average = function (a, b) {
+	var average = function(a, b) {
 		return ((a + b) / 2) >> 0;
 	};
 
@@ -1234,12 +1125,14 @@ define("scripts/factory/fruit.js", function (exports) {
 			this.flame = flame.create(this.startX - radius + 4, this.startY - radius + 5, conf.flameStart || 0);
 	}
 
-	ClassFruit.prototype.set = function (hide) {
+	ClassFruit.prototype.set = function(hide) {
 		var inf = infos[this.type],
 			radius = this.radius;
 
-		this.shadow = layer.createImage("fruit", "images/shadow.png", this.startX - radius, this.startY - radius + shadowPos, 106, 77);
-		this.image = layer.createImage("fruit", inf[0], this.startX - radius, this.startY - radius, inf[1], inf[2]);
+		this.shadow = layer.createImage("fruit", "images/shadow.png", this.startX - radius, this.startY -
+			radius + shadowPos, 106, 77);
+		this.image = layer.createImage("fruit", inf[0], this.startX - radius, this.startY - radius, inf[1],
+			inf[2]);
 
 		if (hide)
 			this.image.hide(),
@@ -1248,7 +1141,7 @@ define("scripts/factory/fruit.js", function (exports) {
 		return this;
 	};
 
-	ClassFruit.prototype.pos = function (x, y) {
+	ClassFruit.prototype.pos = function(x, y) {
 		var r = this.radius;
 		this.originX = x;
 		this.originY = y;
@@ -1270,7 +1163,7 @@ define("scripts/factory/fruit.js", function (exports) {
 			message.postMessage(this, "fruit.fallOutOfViewer");
 	};
 
-	ClassFruit.prototype.show = function (start) {
+	ClassFruit.prototype.show = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: 500,
@@ -1282,7 +1175,7 @@ define("scripts/factory/fruit.js", function (exports) {
 		});
 	};
 
-	ClassFruit.prototype.hide = function (start) {
+	ClassFruit.prototype.hide = function(start) {
 		if (this.type !== "boom") // if it is not a boom, it can't to be hide.
 			return;
 
@@ -1299,7 +1192,7 @@ define("scripts/factory/fruit.js", function (exports) {
 		});
 	};
 
-	ClassFruit.prototype.rotate = function (start, speed) {
+	ClassFruit.prototype.rotate = function(start, speed) {
 		this.rotateSpeed = speed || rotateSpeed[random(6)];
 		timeline.createTask({
 			start: start,
@@ -1310,7 +1203,7 @@ define("scripts/factory/fruit.js", function (exports) {
 		});
 	};
 
-	ClassFruit.prototype.broken = function (angle) {
+	ClassFruit.prototype.broken = function(angle) {
 		if (this.brokend) return;
 		this.brokend = true;
 
@@ -1326,7 +1219,7 @@ define("scripts/factory/fruit.js", function (exports) {
 			this.hide();
 	};
 
-	ClassFruit.prototype.pause = function () {
+	ClassFruit.prototype.pause = function() {
 		if (this.brokend)
 			return;
 		this.anims.clear();
@@ -1335,7 +1228,7 @@ define("scripts/factory/fruit.js", function (exports) {
 	};
 
 	// 分开
-	ClassFruit.prototype.apart = function (angle) {
+	ClassFruit.prototype.apart = function(angle) {
 		this.anims.clear();
 		this.image.hide();
 		this.shadow.hide();
@@ -1344,7 +1237,8 @@ define("scripts/factory/fruit.js", function (exports) {
 		var inf = infos[this.type],
 			preSrc = inf[0].replace(".png", ""),
 			radius = this.radius;
-		var create = layer.createImage.saturate(layer, this.startX - radius, this.startY - radius, inf[1], inf[2]);
+		var create = layer.createImage.saturate(layer, this.startX - radius, this.startY - radius, inf[1],
+			inf[2]);
 
 		angle = ((angle % 180) + 360 + inf[4]) % 360;
 
@@ -1366,9 +1260,9 @@ define("scripts/factory/fruit.js", function (exports) {
 	};
 
 	// 抛出
-	ClassFruit.prototype.shotOut = function () {
+	ClassFruit.prototype.shotOut = function() {
 		var sign = [-1, 1];
-		return function (start, endX) {
+		return function(start, endX) {
 
 			this.shotOutStartX = this.originX;
 			this.shotOutStartY = this.originY;
@@ -1394,10 +1288,10 @@ define("scripts/factory/fruit.js", function (exports) {
 	}();
 
 	// 掉落
-	ClassFruit.prototype.fallOff = function () {
+	ClassFruit.prototype.fallOff = function() {
 		var sign = [-1, 1];
 		var signIndex = 0;
-		return function (start, x) {
+		return function(start, x) {
 
 			if (this.aparted || this.brokend)
 				return;
@@ -1423,7 +1317,7 @@ define("scripts/factory/fruit.js", function (exports) {
 		}
 	}();
 
-	ClassFruit.prototype.remove = function () {
+	ClassFruit.prototype.remove = function() {
 		var index;
 
 		this.anims.clear();
@@ -1444,8 +1338,8 @@ define("scripts/factory/fruit.js", function (exports) {
 
 		for (var name in this)
 			if (typeof this[name] === "function")
-				this[name] = function (name) {
-					return function () {
+				this[name] = function(name) {
+					return function() {
 						throw new Error("method " + name + " has been removed");
 					};
 				}(name);
@@ -1456,45 +1350,47 @@ define("scripts/factory/fruit.js", function (exports) {
 
 	// 显示/隐藏 相关
 
-	ClassFruit.prototype.onShowStart = function () {
+	ClassFruit.prototype.onShowStart = function() {
 		this.image.show();
 		// this.shadow.show();
 	};
 
-	ClassFruit.prototype.onScaling = function (time, a, b, z) {
+	ClassFruit.prototype.onScaling = function(time, a, b, z) {
 		this.image.scale(z = zoomAnim(time, a, b - a, 500), z);
 		this.shadow.scale(z, z);
 	};
 
-	ClassFruit.prototype.onHideEnd = function () {
+	ClassFruit.prototype.onHideEnd = function() {
 		this.remove();
 	};
 
 	// 旋转相关
 
-	ClassFruit.prototype.onRotateStart = function () {
+	ClassFruit.prototype.onRotateStart = function() {
 
 	};
 
-	ClassFruit.prototype.onRotating = function (time) {
+	ClassFruit.prototype.onRotating = function(time) {
 		this.image.rotate((this.rotateSpeed * time / 1e3) % 360, true);
 	};
 
 	// 裂开相关
 
-	ClassFruit.prototype.onBrokenDropUpdate = function (time) {
+	ClassFruit.prototype.onBrokenDropUpdate = function(time) {
 		var radius = this.radius;
 		this.bImage1.attr({
 			x: linearAnim(time, this.brokenPosX - radius, this.brokenTargetX1, dropTime),
-			y: dropAnim(time, this.brokenPosY - radius, this.brokenTargetY1 - this.brokenPosY + radius, dropTime)
+			y: dropAnim(time, this.brokenPosY - radius, this.brokenTargetY1 - this.brokenPosY +
+				radius, dropTime)
 		}).rotate(linearAnim(time, this.apartAngle, this.bImage1RotateAngle, dropTime), true);
 		this.bImage2.attr({
 			x: linearAnim(time, this.brokenPosX - radius, this.brokenTargetX2, dropTime),
-			y: dropAnim(time, this.brokenPosY - radius, this.brokenTargetY2 - this.brokenPosY + radius, dropTime)
+			y: dropAnim(time, this.brokenPosY - radius, this.brokenTargetY2 - this.brokenPosY +
+				radius, dropTime)
 		}).rotate(linearAnim(time, this.apartAngle, this.bImage2RotateAngle, dropTime), true);
 	};
 
-	ClassFruit.prototype.onBrokenDropStart = function () {
+	ClassFruit.prototype.onBrokenDropStart = function() {
 		this.brokenTargetX1 = -(random(dropXScope) + 75);
 		this.brokenTargetX2 = random(dropXScope + 75);
 		this.brokenTargetY1 = 600;
@@ -1509,47 +1405,47 @@ define("scripts/factory/fruit.js", function (exports) {
 				fruitCache.splice(i, 1);
 	};
 
-	ClassFruit.prototype.onBrokenDropEnd = function () {
+	ClassFruit.prototype.onBrokenDropEnd = function() {
 		this.remove();
 	};
 
 	// 抛出相关
 
-	ClassFruit.prototype.onShotOuting = function (time) {
+	ClassFruit.prototype.onShotOuting = function(time) {
 		this.pos(
 			linearAnim(time, this.shotOutStartX, this.shotOutEndX - this.shotOutStartX, dropTime),
 			fallOffAnim(time, this.shotOutStartY, this.shotOutEndY - this.shotOutStartY, dropTime)
 		);
 	};
 
-	ClassFruit.prototype.onShotOutStart = function () {
+	ClassFruit.prototype.onShotOutStart = function() {
 		// body...
 	};
 
-	ClassFruit.prototype.onShotOutEnd = function () {
+	ClassFruit.prototype.onShotOutEnd = function() {
 		this.fallOff(0, this.fallOffToX);
 	};
 
 	// 掉落相关
 
-	ClassFruit.prototype.onFalling = function (time) {
+	ClassFruit.prototype.onFalling = function(time) {
 		this.pos(
 			linearAnim(time, this.brokenPosX, this.fallTargetX - this.brokenPosX, dropTime),
 			dropAnim(time, this.brokenPosY, this.fallTargetY - this.brokenPosY, dropTime)
 		);
 	};
 
-	ClassFruit.prototype.onFallStart = function () {
+	ClassFruit.prototype.onFallStart = function() {
 		this.brokenPosX = this.originX;
 		this.brokenPosY = this.originY;
 	};
 
-	ClassFruit.prototype.onFallEnd = function () {
+	ClassFruit.prototype.onFallEnd = function() {
 		message.postMessage(this, "fruit.fallOff");
 		this.remove();
 	};
 
-	exports.create = function (type, originX, originY, isHide, flameStart) {
+	exports.create = function(type, originX, originY, isHide, flameStart) {
 		if (typeof type == "number") // 缺省 type
 			isHide = originY,
 			originY = originX,
@@ -1567,11 +1463,11 @@ define("scripts/factory/fruit.js", function (exports) {
 		return fruit;
 	};
 
-	exports.getFruitInView = function () {
+	exports.getFruitInView = function() {
 		return fruitCache;
 	};
 
-	exports.getDropTimeSetting = function () {
+	exports.getDropTimeSetting = function() {
 		return dropTime;
 	};
 
@@ -1589,7 +1485,7 @@ define("scripts/factory/fruit.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\factory\juice.js
  */
-define("scripts/factory/juice.js", function (exports) {
+define("scripts/factory/juice.js", function(exports) {
 	/**
 	 * 果汁
 	 */
@@ -1622,14 +1518,14 @@ define("scripts/factory/juice.js", function (exports) {
 		this.dir = random(360) * Math.PI / 180;
 	}
 
-	ClassJuice.prototype.render = function () {
+	ClassJuice.prototype.render = function() {
 		this.circle = layer.circle(this.originX, this.originY, this.radius).attr({
 			fill: this.color,
 			stroke: "none"
 		});
 	};
 
-	ClassJuice.prototype.sputter = function () {
+	ClassJuice.prototype.sputter = function() {
 		timeline.createTask({
 			start: 0,
 			duration: dur,
@@ -1639,7 +1535,7 @@ define("scripts/factory/juice.js", function (exports) {
 		});
 	};
 
-	ClassJuice.prototype.onTimeUpdate = function (time) {
+	ClassJuice.prototype.onTimeUpdate = function(time) {
 		var distance, x, y, z;
 
 		distance = anim(time, 0, this.distance, dur);
@@ -1653,17 +1549,17 @@ define("scripts/factory/juice.js", function (exports) {
 		}).scale(z, z);
 	};
 
-	ClassJuice.prototype.onTimeEnd = function () {
+	ClassJuice.prototype.onTimeEnd = function() {
 		this.circle.remove();
 		tools.unsetObject(this);
 	};
 
-	exports.create = switchOn ? function (x, y, color) {
+	exports.create = switchOn ? function(x, y, color) {
 		for (var i = 0; i < num; i++)
 			this.createOne(x, y, color);
 	} : Ucren.nul;
 
-	exports.createOne = function (x, y, color) {
+	exports.createOne = function(x, y, color) {
 		if (!color)
 			return;
 
@@ -1679,7 +1575,7 @@ define("scripts/factory/juice.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\factory\rotate.js
  */
-define("scripts/factory/rotate.js", function (exports) {
+define("scripts/factory/rotate.js", function(exports) {
 	var layer = require("scripts/layer");
 	var timeline = require("scripts/timeline");
 	var Ucren = require("scripts/lib/ucren");
@@ -1688,7 +1584,7 @@ define("scripts/factory/rotate.js", function (exports) {
 	 * 旋转类模块模型
 	 */
 
-	exports.create = function (imageSrc, x, y, w, h, z, anim, animDur) {
+	exports.create = function(imageSrc, x, y, w, h, z, anim, animDur) {
 		var module = {},
 			image;
 		var rotateDire = [12, -12][Ucren.randomNumber(2)];
@@ -1696,11 +1592,12 @@ define("scripts/factory/rotate.js", function (exports) {
 
 		module.anims = [];
 
-		module.set = function () {
-			image = layer.createImage("default", imageSrc, x, y, w, h).scale(z, z).rotate(defaultAngle, true);
+		module.set = function() {
+			image = layer.createImage("default", imageSrc, x, y, w, h).scale(z, z).rotate(defaultAngle,
+				true);
 		};
 
-		module.show = function (start) {
+		module.show = function(start) {
 			timeline.createTask({
 				start: start,
 				duration: animDur,
@@ -1712,7 +1609,7 @@ define("scripts/factory/rotate.js", function (exports) {
 			});
 		};
 
-		module.hide = function (start) {
+		module.hide = function(start) {
 			this.anims.clear();
 			timeline.createTask({
 				start: start,
@@ -1724,7 +1621,7 @@ define("scripts/factory/rotate.js", function (exports) {
 			});
 		};
 
-		module.onShowEnd = function (name) {
+		module.onShowEnd = function(name) {
 			this.anims.clear();
 			timeline.createTask({
 				start: 0,
@@ -1735,17 +1632,17 @@ define("scripts/factory/rotate.js", function (exports) {
 			});
 		};
 
-		module.onZooming = function () {
+		module.onZooming = function() {
 			var z;
-			return function (time, a, b) {
+			return function(time, a, b) {
 				image.scale(z = anim(time, a, b - a, animDur), z);
 			}
 		}();
 
-		module.onRotating = function () {
+		module.onRotating = function() {
 			var lastTime = 0,
 				an = defaultAngle;
-			return function (time, name, a, b) {
+			return function(time, name, a, b) {
 				an = (an + (time - lastTime) / 1e3 * rotateDire) % 360;
 				image.rotate(an, true);
 				lastTime = time;
@@ -1762,7 +1659,7 @@ define("scripts/factory/rotate.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\lib\buzz.js
  */
-define("scripts/lib/buzz.js", function (exports) {
+define("scripts/lib/buzz.js", function(exports) {
 	// ----------------------------------------------------------------------------
 	// Buzz, a Javascript HTML5 Audio library
 	// v 1.0.x beta
@@ -1811,7 +1708,7 @@ define("scripts/lib/buzz.js", function (exports) {
 		sounds: [],
 		el: document.createElement('audio'),
 
-		sound: function (src, options) {
+		sound: function(src, options) {
 			options = options || {};
 
 			var pid = 0,
@@ -1820,7 +1717,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				supported = buzz.isSupported();
 
 			// publics
-			this.load = function () {
+			this.load = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1829,7 +1726,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.play = function () {
+			this.play = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1838,7 +1735,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.togglePlay = function () {
+			this.togglePlay = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1851,7 +1748,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.pause = function () {
+			this.pause = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1860,7 +1757,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.isPaused = function () {
+			this.isPaused = function() {
 				if (!supported) {
 					return null;
 				}
@@ -1868,7 +1765,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.sound.paused;
 			};
 
-			this.stop = function () {
+			this.stop = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1878,7 +1775,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.isEnded = function () {
+			this.isEnded = function() {
 				if (!supported) {
 					return null;
 				}
@@ -1886,20 +1783,20 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.sound.ended;
 			};
 
-			this.loop = function () {
+			this.loop = function() {
 				if (!supported) {
 					return this;
 				}
 
 				this.sound.loop = 'loop';
-				this.bind('ended.buzzloop', function () {
+				this.bind('ended.buzzloop', function() {
 					this.currentTime = 0;
 					this.play();
 				});
 				return this;
 			};
 
-			this.unloop = function () {
+			this.unloop = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1909,7 +1806,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.mute = function () {
+			this.mute = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1918,7 +1815,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.unmute = function () {
+			this.unmute = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1927,7 +1824,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.toggleMute = function () {
+			this.toggleMute = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1936,7 +1833,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.isMuted = function () {
+			this.isMuted = function() {
 				if (!supported) {
 					return null;
 				}
@@ -1944,7 +1841,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.sound.muted;
 			};
 
-			this.setVolume = function (volume) {
+			this.setVolume = function(volume) {
 				if (!supported) {
 					return this;
 				}
@@ -1961,7 +1858,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.getVolume = function () {
+			this.getVolume = function() {
 				if (!supported) {
 					return this;
 				}
@@ -1969,26 +1866,26 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.volume;
 			};
 
-			this.increaseVolume = function (value) {
+			this.increaseVolume = function(value) {
 				return this.setVolume(this.volume + (value || 1));
 			};
 
-			this.decreaseVolume = function (value) {
+			this.decreaseVolume = function(value) {
 				return this.setVolume(this.volume - (value || 1));
 			};
 
-			this.setTime = function (time) {
+			this.setTime = function(time) {
 				if (!supported) {
 					return this;
 				}
 
-				this.whenReady(function () {
+				this.whenReady(function() {
 					this.sound.currentTime = time;
 				});
 				return this;
 			};
 
-			this.getTime = function () {
+			this.getTime = function() {
 				if (!supported) {
 					return null;
 				}
@@ -1997,7 +1894,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return isNaN(time) ? buzz.defaults.placeholder : time;
 			};
 
-			this.setPercent = function (percent) {
+			this.setPercent = function(percent) {
 				if (!supported) {
 					return this;
 				}
@@ -2005,16 +1902,17 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.setTime(buzz.fromPercent(percent, this.sound.duration));
 			};
 
-			this.getPercent = function () {
+			this.getPercent = function() {
 				if (!supported) {
 					return null;
 				}
 
-				var percent = Math.round(buzz.toPercent(this.sound.currentTime, this.sound.duration));
+				var percent = Math.round(buzz.toPercent(this.sound.currentTime, this.sound
+					.duration));
 				return isNaN(percent) ? buzz.defaults.placeholder : percent;
 			};
 
-			this.setSpeed = function (duration) {
+			this.setSpeed = function(duration) {
 				if (!supported) {
 					return this;
 				}
@@ -2022,7 +1920,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				this.sound.playbackRate = duration;
 			};
 
-			this.getSpeed = function () {
+			this.getSpeed = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2030,7 +1928,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.sound.playbackRate;
 			};
 
-			this.getDuration = function () {
+			this.getDuration = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2039,7 +1937,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return isNaN(duration) ? buzz.defaults.placeholder : duration;
 			};
 
-			this.getPlayed = function () {
+			this.getPlayed = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2047,7 +1945,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return timerangeToArray(this.sound.played);
 			};
 
-			this.getBuffered = function () {
+			this.getBuffered = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2055,7 +1953,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return timerangeToArray(this.sound.buffered);
 			};
 
-			this.getSeekable = function () {
+			this.getSeekable = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2063,14 +1961,14 @@ define("scripts/lib/buzz.js", function (exports) {
 				return timerangeToArray(this.sound.seekable);
 			};
 
-			this.getErrorCode = function () {
+			this.getErrorCode = function() {
 				if (supported && this.sound.error) {
 					return this.sound.error.code;
 				}
 				return 0;
 			};
 
-			this.getErrorMessage = function () {
+			this.getErrorMessage = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2089,7 +1987,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				}
 			};
 
-			this.getStateCode = function () {
+			this.getStateCode = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2097,7 +1995,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.sound.readyState;
 			};
 
-			this.getStateMessage = function () {
+			this.getStateMessage = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2118,7 +2016,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				}
 			};
 
-			this.getNetworkStateCode = function () {
+			this.getNetworkStateCode = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2126,7 +2024,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.sound.networkState;
 			};
 
-			this.getNetworkStateMessage = function () {
+			this.getNetworkStateMessage = function() {
 				if (!supported) {
 					return null;
 				}
@@ -2145,7 +2043,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				}
 			};
 
-			this.set = function (key, value) {
+			this.set = function(key, value) {
 				if (!supported) {
 					return this;
 				}
@@ -2154,7 +2052,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.get = function (key) {
+			this.get = function(key) {
 				if (!supported) {
 					return null;
 				}
@@ -2162,7 +2060,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return key ? this.sound[key] : this.sound;
 			};
 
-			this.bind = function (types, func) {
+			this.bind = function(types, func) {
 				if (!supported) {
 					return this;
 				}
@@ -2170,7 +2068,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				types = types.split(' ');
 
 				var that = this,
-					efunc = function (e) {
+					efunc = function(e) {
 						func.call(that, e);
 					};
 
@@ -2188,7 +2086,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.unbind = function (types) {
+			this.unbind = function(types) {
 				if (!supported) {
 					return this;
 				}
@@ -2201,7 +2099,8 @@ define("scripts/lib/buzz.js", function (exports) {
 
 					for (var i = 0; i < events.length; i++) {
 						var namespace = events[i].idx.split('.');
-						if (events[i].idx == idx || (namespace[1] && namespace[1] == idx.replace('.', ''))) {
+						if (events[i].idx == idx || (namespace[1] && namespace[1] == idx.replace(
+								'.', ''))) {
 							this.sound.removeEventListener(type, events[i].func, true);
 							// remove event
 							events.splice(i, 1);
@@ -2211,7 +2110,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.bindOnce = function (type, func) {
+			this.bindOnce = function(type, func) {
 				if (!supported) {
 					return this;
 				}
@@ -2219,7 +2118,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				var that = this;
 
 				eventsOnce[pid++] = false;
-				this.bind(pid + type, function () {
+				this.bind(pid + type, function() {
 					if (!eventsOnce[pid]) {
 						eventsOnce[pid] = true;
 						func.call(that);
@@ -2228,7 +2127,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				});
 			};
 
-			this.trigger = function (types) {
+			this.trigger = function(types) {
 				if (!supported) {
 					return this;
 				}
@@ -2240,7 +2139,8 @@ define("scripts/lib/buzz.js", function (exports) {
 
 					for (var i = 0; i < events.length; i++) {
 						var eventType = events[i].idx.split('.');
-						if (events[i].idx == idx || (eventType[0] && eventType[0] == idx.replace('.', ''))) {
+						if (events[i].idx == idx || (eventType[0] && eventType[0] == idx.replace(
+								'.', ''))) {
 							var evt = document.createEvent('HTMLEvents');
 							evt.initEvent(eventType[0], false, true);
 							this.sound.dispatchEvent(evt);
@@ -2250,7 +2150,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.fadeTo = function (to, duration, callback) {
+			this.fadeTo = function(to, duration, callback) {
 				if (!supported) {
 					return this;
 				}
@@ -2268,7 +2168,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				this.play();
 
 				function doFade() {
-					setTimeout(function () {
+					setTimeout(function() {
 						if (from < to && that.volume < to) {
 							that.setVolume(that.volume += 1);
 							doFade();
@@ -2280,14 +2180,14 @@ define("scripts/lib/buzz.js", function (exports) {
 						}
 					}, delay);
 				}
-				this.whenReady(function () {
+				this.whenReady(function() {
 					doFade();
 				});
 
 				return this;
 			};
 
-			this.fadeIn = function (duration, callback) {
+			this.fadeIn = function(duration, callback) {
 				if (!supported) {
 					return this;
 				}
@@ -2295,7 +2195,7 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.setVolume(0).fadeTo(100, duration, callback);
 			};
 
-			this.fadeOut = function (duration, callback) {
+			this.fadeOut = function(duration, callback) {
 				if (!supported) {
 					return this;
 				}
@@ -2303,12 +2203,12 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this.fadeTo(0, duration, callback);
 			};
 
-			this.fadeWith = function (sound, duration) {
+			this.fadeWith = function(sound, duration) {
 				if (!supported) {
 					return this;
 				}
 
-				this.fadeOut(duration, function () {
+				this.fadeOut(duration, function() {
 					this.stop();
 				});
 
@@ -2317,14 +2217,14 @@ define("scripts/lib/buzz.js", function (exports) {
 				return this;
 			};
 
-			this.whenReady = function (func) {
+			this.whenReady = function(func) {
 				if (!supported) {
 					return null;
 				}
 
 				var that = this;
 				if (this.sound.readyState === 0) {
-					this.bind('canplay.buzzwhenready', function () {
+					this.bind('canplay.buzzwhenready', function() {
 						func.call(that);
 					});
 				} else {
@@ -2408,22 +2308,22 @@ define("scripts/lib/buzz.js", function (exports) {
 			}
 		},
 
-		group: function (sounds) {
+		group: function(sounds) {
 			sounds = argsToArray(sounds, arguments);
 
 			// publics
-			this.getSounds = function () {
+			this.getSounds = function() {
 				return sounds;
 			};
 
-			this.add = function (soundArray) {
+			this.add = function(soundArray) {
 				soundArray = argsToArray(soundArray, arguments);
 				for (var a = 0; a < soundArray.length; a++) {
 					sounds.push(soundArray[a]);
 				}
 			};
 
-			this.remove = function (soundArray) {
+			this.remove = function(soundArray) {
 				soundArray = argsToArray(soundArray, arguments);
 				for (var a = 0; a < soundArray.length; a++) {
 					for (var i = 0; i < sounds.length; i++) {
@@ -2435,117 +2335,117 @@ define("scripts/lib/buzz.js", function (exports) {
 				}
 			};
 
-			this.load = function () {
+			this.load = function() {
 				fn('load');
 				return this;
 			};
 
-			this.play = function () {
+			this.play = function() {
 				fn('play');
 				return this;
 			};
 
-			this.togglePlay = function () {
+			this.togglePlay = function() {
 				fn('togglePlay');
 				return this;
 			};
 
-			this.pause = function (time) {
+			this.pause = function(time) {
 				fn('pause', time);
 				return this;
 			};
 
-			this.stop = function () {
+			this.stop = function() {
 				fn('stop');
 				return this;
 			};
 
-			this.mute = function () {
+			this.mute = function() {
 				fn('mute');
 				return this;
 			};
 
-			this.unmute = function () {
+			this.unmute = function() {
 				fn('unmute');
 				return this;
 			};
 
-			this.toggleMute = function () {
+			this.toggleMute = function() {
 				fn('toggleMute');
 				return this;
 			};
 
-			this.setVolume = function (volume) {
+			this.setVolume = function(volume) {
 				fn('setVolume', volume);
 				return this;
 			};
 
-			this.increaseVolume = function (value) {
+			this.increaseVolume = function(value) {
 				fn('increaseVolume', value);
 				return this;
 			};
 
-			this.decreaseVolume = function (value) {
+			this.decreaseVolume = function(value) {
 				fn('decreaseVolume', value);
 				return this;
 			};
 
-			this.loop = function () {
+			this.loop = function() {
 				fn('loop');
 				return this;
 			};
 
-			this.unloop = function () {
+			this.unloop = function() {
 				fn('unloop');
 				return this;
 			};
 
-			this.setTime = function (time) {
+			this.setTime = function(time) {
 				fn('setTime', time);
 				return this;
 			};
 
-			this.setduration = function (duration) {
+			this.setduration = function(duration) {
 				fn('setduration', duration);
 				return this;
 			};
 
-			this.set = function (key, value) {
+			this.set = function(key, value) {
 				fn('set', key, value);
 				return this;
 			};
 
-			this.bind = function (type, func) {
+			this.bind = function(type, func) {
 				fn('bind', type, func);
 				return this;
 			};
 
-			this.unbind = function (type) {
+			this.unbind = function(type) {
 				fn('unbind', type);
 				return this;
 			};
 
-			this.bindOnce = function (type, func) {
+			this.bindOnce = function(type, func) {
 				fn('bindOnce', type, func);
 				return this;
 			};
 
-			this.trigger = function (type) {
+			this.trigger = function(type) {
 				fn('trigger', type);
 				return this;
 			};
 
-			this.fade = function (from, to, duration, callback) {
+			this.fade = function(from, to, duration, callback) {
 				fn('fade', from, to, duration, callback);
 				return this;
 			};
 
-			this.fadeIn = function (duration, callback) {
+			this.fadeIn = function(duration, callback) {
 				fn('fadeIn', duration, callback);
 				return this;
 			};
 
-			this.fadeOut = function (duration, callback) {
+			this.fadeOut = function(duration, callback) {
 				fn('fadeOut', duration, callback);
 				return this;
 			};
@@ -2565,31 +2465,32 @@ define("scripts/lib/buzz.js", function (exports) {
 			}
 		},
 
-		all: function () {
+		all: function() {
 			return new buzz.group(buzz.sounds);
 		},
 
-		isSupported: function () {
+		isSupported: function() {
 			return !!buzz.el.canPlayType;
 		},
 
-		isOGGSupported: function () {
+		isOGGSupported: function() {
 			return !!buzz.el.canPlayType && buzz.el.canPlayType('audio/ogg; codecs="vorbis"');
 		},
 
-		isWAVSupported: function () {
+		isWAVSupported: function() {
 			return !!buzz.el.canPlayType && buzz.el.canPlayType('audio/wav; codecs="1"');
 		},
 
-		isMP3Supported: function () {
+		isMP3Supported: function() {
 			return !!buzz.el.canPlayType && buzz.el.canPlayType('audio/mpeg;');
 		},
 
-		isAACSupported: function () {
-			return !!buzz.el.canPlayType && (buzz.el.canPlayType('audio/x-m4a;') || buzz.el.canPlayType('audio/aac;'));
+		isAACSupported: function() {
+			return !!buzz.el.canPlayType && (buzz.el.canPlayType('audio/x-m4a;') || buzz.el.canPlayType(
+				'audio/aac;'));
 		},
 
-		toTimer: function (time, withHours) {
+		toTimer: function(time, withHours) {
 			var h, m, s;
 			h = Math.floor(time / 3600);
 			h = isNaN(h) ? '--' : (h >= 10) ? h : '0' + h;
@@ -2600,10 +2501,11 @@ define("scripts/lib/buzz.js", function (exports) {
 			return withHours ? h + ':' + m + ':' + s : m + ':' + s;
 		},
 
-		fromTimer: function (time) {
+		fromTimer: function(time) {
 			var splits = time.toString().split(':');
 			if (splits && splits.length == 3) {
-				time = (parseInt(splits[0], 10) * 3600) + (parseInt(splits[1], 10) * 60) + parseInt(splits[2], 10);
+				time = (parseInt(splits[0], 10) * 3600) + (parseInt(splits[1], 10) * 60) + parseInt(
+					splits[2], 10);
 			}
 			if (splits && splits.length == 2) {
 				time = (parseInt(splits[0], 10) * 60) + parseInt(splits[1], 10);
@@ -2611,13 +2513,13 @@ define("scripts/lib/buzz.js", function (exports) {
 			return time;
 		},
 
-		toPercent: function (value, total, decimal) {
+		toPercent: function(value, total, decimal) {
 			var r = Math.pow(10, decimal || 0);
 
 			return Math.round(((value * 100) / total) * r) / r;
 		},
 
-		fromPercent: function (percent, total, decimal) {
+		fromPercent: function(percent, total, decimal) {
 			var r = Math.pow(10, decimal || 0);
 
 			return Math.round(((total / 100) * percent) * r) / r;
@@ -2633,7 +2535,7 @@ define("scripts/lib/buzz.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\lib\raphael.js
  */
-define("scripts/lib/raphael.js", function (exports) {
+define("scripts/lib/raphael.js", function(exports) {
 	/*
 	 * Raphael 1.5.2 - JavaScript Vector Library
 	 *
@@ -2643,7 +2545,7 @@ define("scripts/lib/raphael.js", function (exports) {
 
 	var Raphael;
 	var window = {};
-	(function () {
+	(function() {
 		function a() {
 			if (a.is(arguments[0], G)) {
 				var b = arguments[0],
@@ -2676,7 +2578,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				was: Object[e][f].call(h, "Raphael"),
 				is: h.Raphael
 			},
-			j = function () {
+			j = function() {
 				this.customAttributes = {}
 			},
 			k, l = "appendChild",
@@ -2687,7 +2589,10 @@ define("scripts/lib/raphael.js", function (exports) {
 			q = " ",
 			r = String,
 			s = "split",
-			t = "click dblclick mousedown mousemove mouseout mouseover mouseup touchstart touchmove touchend orientationchange touchcancel gesturestart gesturechange gestureend" [s](q),
+			t =
+			"click dblclick mousedown mousemove mouseout mouseover mouseup touchstart touchmove touchend orientationchange touchcancel gesturestart gesturechange gestureend" [
+				s
+			](q),
 			u = {
 				mousedown: "touchstart",
 				mousemove: "touchmove",
@@ -2711,7 +2616,8 @@ define("scripts/lib/raphael.js", function (exports) {
 			K = {},
 			L = "push",
 			M = /^url\(['"]?([^\)]+?)['"]?\)$/i,
-			N = /^\s*((#[a-f\d]{6})|(#[a-f\d]{3})|rgba?\(\s*([\d\.]+%?\s*,\s*[\d\.]+%?\s*,\s*[\d\.]+(?:%?\s*,\s*[\d\.]+)?)%?\s*\)|hsba?\(\s*([\d\.]+(?:deg|\xb0|%)?\s*,\s*[\d\.]+%?\s*,\s*[\d\.]+(?:%?\s*,\s*[\d\.]+)?)%?\s*\)|hsla?\(\s*([\d\.]+(?:deg|\xb0|%)?\s*,\s*[\d\.]+%?\s*,\s*[\d\.]+(?:%?\s*,\s*[\d\.]+)?)%?\s*\))\s*$/i,
+			N =
+			/^\s*((#[a-f\d]{6})|(#[a-f\d]{3})|rgba?\(\s*([\d\.]+%?\s*,\s*[\d\.]+%?\s*,\s*[\d\.]+(?:%?\s*,\s*[\d\.]+)?)%?\s*\)|hsba?\(\s*([\d\.]+(?:deg|\xb0|%)?\s*,\s*[\d\.]+%?\s*,\s*[\d\.]+(?:%?\s*,\s*[\d\.]+)?)%?\s*\)|hsla?\(\s*([\d\.]+(?:deg|\xb0|%)?\s*,\s*[\d\.]+%?\s*,\s*[\d\.]+(?:%?\s*,\s*[\d\.]+)?)%?\s*\))\s*$/i,
 			O = {
 				"NaN": 1,
 				Infinity: 1,
@@ -2799,10 +2705,11 @@ define("scripts/lib/raphael.js", function (exports) {
 			bb = /([achlmqstvz])[\s,]*((-?\d*\.?\d*(?:e[-+]?\d+)?\s*,?\s*)+)/ig,
 			bc = /(-?\d*\.?\d*(?:e[-+]?\d+)?)\s*,?\s*/ig,
 			bd = /^r(?:\(([^,]+?)\s*,\s*([^\)]+?)\))?/,
-			be = function (a, b) {
+			be = function(a, b) {
 				return a.key - b.key
 			};
-		a.type = h.SVGAngle || g.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ? "SVG" : "VML";
+		a.type = h.SVGAngle || g.implementation.hasFeature(
+			"http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ? "SVG" : "VML";
 		if (a.type == "VML") {
 			var bf = g.createElement("div"),
 				bg;
@@ -2818,12 +2725,14 @@ define("scripts/lib/raphael.js", function (exports) {
 		a._id = 0;
 		a._oid = 0;
 		a.fn = {};
-		a.is = function (a, b) {
+		a.is = function(a, b) {
 			b = x.call(b);
 			if (b == "finite") return !O[f](+a);
-			return b == "null" && a === null || b == typeof a || b == "object" && a === Object(a) || b == "array" && Array.isArray && Array.isArray(a) || J.call(a).slice(8, -1).toLowerCase() == b
+			return b == "null" && a === null || b == typeof a || b == "object" && a === Object(a) ||
+				b == "array" && Array.isArray && Array.isArray(a) || J.call(a).slice(8, -1)
+				.toLowerCase() == b
 		};
-		a.angle = function (b, c, d, e, f, g) {
+		a.angle = function(b, c, d, e, f, g) {
 			{
 				if (f == null) {
 					var h = b - d,
@@ -2834,13 +2743,13 @@ define("scripts/lib/raphael.js", function (exports) {
 				return a.angle(b, c, f, g) - a.angle(d, e, f, g)
 			}
 		};
-		a.rad = function (a) {
+		a.rad = function(a) {
 			return a % 360 * D / 180
 		};
-		a.deg = function (a) {
+		a.deg = function(a) {
 			return a * 180 / D % 360
 		};
-		a.snapTo = function (b, c, d) {
+		a.snapTo = function(b, c, d) {
 			d = a.is(d, "finite") ? d : 10;
 			if (a.is(b, G)) {
 				var e = b.length;
@@ -2863,11 +2772,11 @@ define("scripts/lib/raphael.js", function (exports) {
 			a[16] = (a[16] & 3 | 8)[H](16);
 			return "r-" + a[v]("")
 		}
-		a.setWindow = function (a) {
+		a.setWindow = function(a) {
 			h = a;
 			g = h.document
 		};
-		var bi = function (b) {
+		var bi = function(b) {
 				if (a.vml) {
 					var c = /^\s+|\s+$/g,
 						d;
@@ -2880,7 +2789,7 @@ define("scripts/lib/raphael.js", function (exports) {
 						d = createPopup().document.body
 					}
 					var f = d.createTextRange();
-					bi = bm(function (a) {
+					bi = bm(function(a) {
 						try {
 							d.style.color = r(a)[Y](c, p);
 							var b = f.queryCommandValue("ForeColor");
@@ -2895,23 +2804,23 @@ define("scripts/lib/raphael.js", function (exports) {
 					h.title = "Raphaël Colour Picker";
 					h.style.display = "none";
 					g.body[l](h);
-					bi = bm(function (a) {
+					bi = bm(function(a) {
 						h.style.color = a;
 						return g.defaultView.getComputedStyle(h, p).getPropertyValue("color")
 					})
 				}
 				return bi(b)
 			},
-			bj = function () {
+			bj = function() {
 				return "hsb(" + [this.h, this.s, this.b] + ")"
 			},
-			bk = function () {
+			bk = function() {
 				return "hsl(" + [this.h, this.s, this.l] + ")"
 			},
-			bl = function () {
+			bl = function() {
 				return this.hex
 			};
-		a.hsb2rgb = function (b, c, d, e) {
+		a.hsb2rgb = function(b, c, d, e) {
 			if (a.is(b, "object") && "h" in b && "s" in b && "b" in b) {
 				d = b.b;
 				c = b.s;
@@ -2920,7 +2829,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 			return a.hsl2rgb(b, c, d / 2, e)
 		};
-		a.hsl2rgb = function (b, c, d, e) {
+		a.hsl2rgb = function(b, c, d, e) {
 			if (a.is(b, "object") && "h" in b && "s" in b && "l" in b) {
 				d = b.l;
 				c = b.s;
@@ -2941,7 +2850,8 @@ define("scripts/lib/raphael.js", function (exports) {
 					j = b + 1 / 3 * -(n - 1);
 					j < 0 && j++;
 					j > 1 && j--;
-					j * 6 < 1 ? f[g[n]] = i + (h - i) * 6 * j : j * 2 < 1 ? f[g[n]] = h : j * 3 < 2 ? f[g[n]] = i + (h - i) * (2 / 3 - j) * 6 : f[g[n]] = i
+					j * 6 < 1 ? f[g[n]] = i + (h - i) * 6 * j : j * 2 < 1 ? f[g[n]] = h : j * 3 < 2 ? f[
+						g[n]] = i + (h - i) * (2 / 3 - j) * 6 : f[g[n]] = i
 				}
 			} else f = {
 				r: d,
@@ -2956,7 +2866,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			f.toString = bl;
 			return f
 		};
-		a.rgb2hsb = function (b, c, d) {
+		a.rgb2hsb = function(b, c, d) {
 			if (c == null && a.is(b, "object") && "r" in b && "g" in b && "b" in b) {
 				d = b.b;
 				c = b.g;
@@ -2996,7 +2906,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				toString: bj
 			}
 		};
-		a.rgb2hsl = function (b, c, d) {
+		a.rgb2hsl = function(b, c, d) {
 			if (c == null && a.is(b, "object") && "r" in b && "g" in b && "b" in b) {
 				d = b.b;
 				c = b.g;
@@ -3038,7 +2948,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			k.toString = bk;
 			return k
 		};
-		a._path2string = function () {
+		a._path2string = function() {
 			return this.join(",")[Y](ba, "$1")
 		};
 
@@ -3056,7 +2966,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 			return d
 		}
-		a.getRGB = bm(function (b) {
+		a.getRGB = bm(function(b) {
 			if (!b || !(!((b = r(b)).indexOf("-") + 1))) return {
 				r: -1,
 				g: -1,
@@ -3137,7 +3047,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				error: 1
 			}
 		}, a);
-		a.getColor = function (a) {
+		a.getColor = function(a) {
 			var b = this.getColor.start = this.getColor.start || {
 					h: 0,
 					s: 1,
@@ -3156,10 +3066,10 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 			return c.hex
 		};
-		a.getColor.reset = function () {
+		a.getColor.reset = function() {
 			delete this.start
 		};
-		a.parsePathString = bm(function (b) {
+		a.parsePathString = bm(function(b) {
 			if (!b) return null;
 			var c = {
 					a: 7,
@@ -3175,10 +3085,10 @@ define("scripts/lib/raphael.js", function (exports) {
 				},
 				d = [];
 			a.is(b, G) && a.is(b[0], G) && (d = bo(b));
-			d[w] || r(b)[Y](bb, function (a, b, e) {
+			d[w] || r(b)[Y](bb, function(a, b, e) {
 				var f = [],
 					g = x.call(b);
-				e[Y](bc, function (a, b) {
+				e[Y](bc, function(a, b) {
 					b && f[L](+b)
 				});
 				if (g == "m" && f[w] > 2) {
@@ -3194,7 +3104,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			d[H] = a._path2string;
 			return d
 		});
-		a.findDotsAtSegment = function (a, b, c, d, e, f, g, h, i) {
+		a.findDotsAtSegment = function(a, b, c, d, e, f, g, h, i) {
 			var j = 1 - i,
 				k = C(j, 3) * a + C(j, 2) * 3 * i * c + j * 3 * i * i * e + C(i, 3) * g,
 				l = C(j, 3) * b + C(j, 2) * 3 * i * d + j * 3 * i * i * f + C(i, 3) * h,
@@ -3230,7 +3140,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				alpha: u
 			}
 		};
-		var bn = bm(function (a) {
+		var bn = bm(function(a) {
 				if (!a) return {
 					x: 0,
 					y: 0,
@@ -3267,7 +3177,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					height: z[m](0, e) - k
 				}
 			}),
-			bo = function (b) {
+			bo = function(b) {
 				var c = [];
 				if (!a.is(b, G) || !a.is(b && b[0], G)) b = a.parsePathString(b);
 				for (var d = 0, e = b[w]; d < e; d++) {
@@ -3277,7 +3187,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				c[H] = a._path2string;
 				return c
 			},
-			bp = bm(function (b) {
+			bp = bm(function(b) {
 				if (!a.is(b, G) || !a.is(b && b[0], G)) b = a.parsePathString(b);
 				var c = [],
 					d = 0,
@@ -3315,7 +3225,8 @@ define("scripts/lib/raphael.js", function (exports) {
 								f = l[1];
 								g = l[2];
 							default:
-								for (var m = 1, n = l[w]; m < n; m++) k[m] = +(l[m] - (m % 2 ? d : e)).toFixed(3)
+								for (var m = 1, n = l[w]; m < n; m++) k[m] = +(l[m] - (m % 2 ? d : e))
+									.toFixed(3)
 						}
 					} else {
 						k = c[i] = [];
@@ -3345,7 +3256,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				c[H] = a._path2string;
 				return c
 			}, 0, bo),
-			bq = bm(function (b) {
+			bq = bm(function(b) {
 				if (!a.is(b, G) || !a.is(b && b[0], G)) b = a.parsePathString(b);
 				var c = [],
 					d = 0,
@@ -3412,19 +3323,19 @@ define("scripts/lib/raphael.js", function (exports) {
 				c[H] = a._path2string;
 				return c
 			}, null, bo),
-			br = function (a, b, c, d) {
+			br = function(a, b, c, d) {
 				return [a, b, c, d, c, d]
 			},
-			bs = function (a, b, c, d, e, f) {
+			bs = function(a, b, c, d, e, f) {
 				var g = 1 / 3,
 					h = 2 / 3;
 				return [g * a + h * c, g * b + h * d, g * e + h * c, g * f + h * d, e, f]
 			},
-			bt = function (a, b, c, d, e, f, g, h, i, j) {
+			bt = function(a, b, c, d, e, f, g, h, i, j) {
 				var k = D * 120 / 180,
 					l = D / 180 * (+e || 0),
 					m = [],
-					o, p = bm(function (a, b, c) {
+					o, p = bm(function(a, b, c) {
 						var d = a * y.cos(c) - b * y.sin(c),
 							e = a * y.sin(c) + b * y.cos(c);
 						return {
@@ -3456,7 +3367,8 @@ define("scripts/lib/raphael.js", function (exports) {
 					}
 					var z = c * c,
 						A = d * d,
-						C = (f == g ? -1 : 1) * y.sqrt(B((z * A - z * u * u - A * t * t) / (z * u * u + A * t * t))),
+						C = (f == g ? -1 : 1) * y.sqrt(B((z * A - z * u * u - A * t * t) / (z * u * u + A *
+							t * t))),
 						E = C * c * u / d + (a + h) / 2,
 						F = C * -d * t / c + (b + i) / 2,
 						G = y.asin(((b - F) / d).toFixed(9)),
@@ -3495,18 +3407,19 @@ define("scripts/lib/raphael.js", function (exports) {
 					if (j) return [U, V, W][n](m);
 					m = [U, V, W][n](m)[v]()[s](",");
 					var X = [];
-					for (var Y = 0, Z = m[w]; Y < Z; Y++) X[Y] = Y % 2 ? p(m[Y - 1], m[Y], l).y : p(m[Y], m[Y + 1], l).x;
+					for (var Y = 0, Z = m[w]; Y < Z; Y++) X[Y] = Y % 2 ? p(m[Y - 1], m[Y], l).y : p(m[Y], m[
+						Y + 1], l).x;
 					return X
 				}
 			},
-			bu = function (a, b, c, d, e, f, g, h, i) {
+			bu = function(a, b, c, d, e, f, g, h, i) {
 				var j = 1 - i;
 				return {
 					x: C(j, 3) * a + C(j, 2) * 3 * i * c + j * 3 * i * i * e + C(i, 3) * g,
 					y: C(j, 3) * b + C(j, 2) * 3 * i * d + j * 3 * i * i * f + C(i, 3) * h
 				}
 			},
-			bv = bm(function (a, b, c, d, e, f, g, h) {
+			bv = bm(function(a, b, c, d, e, f, g, h) {
 				var i = e - 2 * c + a - (g - 2 * e + c),
 					j = 2 * (c - a) - 2 * (e - c),
 					k = a - c,
@@ -3555,7 +3468,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					}
 				}
 			}),
-			bw = bm(function (a, b) {
+			bw = bm(function(a, b) {
 				var c = bq(a),
 					d = b && bq(b),
 					e = {
@@ -3578,7 +3491,7 @@ define("scripts/lib/raphael.js", function (exports) {
 						qx: null,
 						qy: null
 					},
-					g = function (a, b) {
+					g = function(a, b) {
 						var c, d;
 						if (!a) return ["C", b.x, b.y, b.x, b.y, b.x, b.y];
 						!(a[0] in {
@@ -3623,7 +3536,7 @@ define("scripts/lib/raphael.js", function (exports) {
 						}
 						return a
 					},
-					h = function (a, b) {
+					h = function(a, b) {
 						if (a[b][w] > 7) {
 							a[b].shift();
 							var e = a[b];
@@ -3632,7 +3545,7 @@ define("scripts/lib/raphael.js", function (exports) {
 							k = z(c[w], d && d[w] || 0)
 						}
 					},
-					i = function (a, b, e, f, g) {
+					i = function(a, b, e, f, g) {
 						if (a && b && a[g][0] == "M" && b[g][0] != "M") {
 							b.splice(g, 0, ["M", f.x, f.y]);
 							e.bx = 0;
@@ -3664,7 +3577,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				return d ? [c, d] : c
 			}, null, bo),
-			bx = bm(function (b) {
+			bx = bm(function(b) {
 				var c = [];
 				for (var d = 0, e = b[w]; d < e; d++) {
 					var f = {},
@@ -3699,7 +3612,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				return c
 			}),
-			by = function (b, c, d, e) {
+			by = function(b, c, d, e) {
 				var f;
 				if (a.is(b, F) || a.is(b, "object")) {
 					f = a.is(b, F) ? g.getElementById(b) : b;
@@ -3720,13 +3633,13 @@ define("scripts/lib/raphael.js", function (exports) {
 					height: e
 				}
 			},
-			bz = function (a, b) {
+			bz = function(a, b) {
 				var c = this;
 				for (var d in b) {
 					if (b[f](d) && !(d in a)) switch (typeof b[d]) {
 						case "function":
-							(function (b) {
-								a[d] = a === c ? b : function () {
+							(function(b) {
+								a[d] = a === c ? b : function() {
 									return b[m](c, arguments)
 								}
 							})(b[d]);
@@ -3741,13 +3654,13 @@ define("scripts/lib/raphael.js", function (exports) {
 					}
 				}
 			},
-			bA = function (a, b) {
+			bA = function(a, b) {
 				a == b.top && (b.top = a.prev);
 				a == b.bottom && (b.bottom = a.next);
 				a.next && (a.next.prev = a.prev);
 				a.prev && (a.prev.next = a.next)
 			},
-			bB = function (a, b) {
+			bB = function(a, b) {
 				if (b.top === a) return;
 				bA(a, b);
 				a.next = null;
@@ -3755,7 +3668,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				b.top.next = a;
 				b.top = a
 			},
-			bC = function (a, b) {
+			bC = function(a, b) {
 				if (b.bottom === a) return;
 				bA(a, b);
 				a.next = b.bottom;
@@ -3763,7 +3676,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				b.bottom.prev = a;
 				b.bottom = a
 			},
-			bD = function (a, b, c) {
+			bD = function(a, b, c) {
 				bA(a, c);
 				b == c.top && (c.top = a);
 				b.next && (b.next.prev = a);
@@ -3771,7 +3684,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				a.prev = b;
 				b.next = a
 			},
-			bE = function (a, b, c) {
+			bE = function(a, b, c) {
 				bA(a, c);
 				b == c.bottom && (c.bottom = a);
 				b.prev && (b.prev.next = a);
@@ -3779,8 +3692,8 @@ define("scripts/lib/raphael.js", function (exports) {
 				b.prev = a;
 				a.next = b
 			},
-			bF = function (a) {
-				return function () {
+			bF = function(a) {
+				return function() {
 					throw new Error("Raphaël: you are calling to method “" + a + "” of removed object")
 				}
 			};
@@ -3788,10 +3701,10 @@ define("scripts/lib/raphael.js", function (exports) {
 		if (a.svg) {
 			k.svgns = "http://www.w3.org/2000/svg";
 			k.xlink = "http://www.w3.org/1999/xlink";
-			Q = function (a) {
+			Q = function(a) {
 				return +a + (~(~a) === a) * 0.5
 			};
-			var bG = function (a, b) {
+			var bG = function(a, b) {
 				if (b)
 					for (var c in b) b[f](c) && a[R](c, r(b[c]));
 				else {
@@ -3800,10 +3713,10 @@ define("scripts/lib/raphael.js", function (exports) {
 					return a
 				}
 			};
-			a[H] = function () {
+			a[H] = function() {
 				return "Your browser supports SVG.\nYou are running Raphaël " + this.version
 			};
-			var bH = function (a, b) {
+			var bH = function(a, b) {
 					var c = bG("path");
 					b.canvas && b.canvas[l](c);
 					var d = new bN(c, b);
@@ -3815,18 +3728,19 @@ define("scripts/lib/raphael.js", function (exports) {
 					});
 					return d
 				},
-				bI = function (a, b, c) {
+				bI = function(a, b, c) {
 					var d = "linear",
 						e = 0.5,
 						f = 0.5,
 						h = a.style;
-					b = r(b)[Y](bd, function (a, b, c) {
+					b = r(b)[Y](bd, function(a, b, c) {
 						d = "radial";
 						if (b && c) {
 							e = S(b);
 							f = S(c);
 							var g = (f > 0.5) * 2 - 1;
-							C(e - 0.5, 2) + C(f - 0.5, 2) > 0.25 && (f = y.sqrt(0.25 - C(e - 0.5, 2)) * g + 0.5) && f != 0.5 && (f = f.toFixed(5) - 0.00001 * g)
+							C(e - 0.5, 2) + C(f - 0.5, 2) > 0.25 && (f = y.sqrt(0.25 - C(e - 0.5,
+								2)) * g + 0.5) && f != 0.5 && (f = f.toFixed(5) - 0.00001 * g)
 						}
 						return p
 					});
@@ -3883,13 +3797,13 @@ define("scripts/lib/raphael.js", function (exports) {
 					h.fillOpacity = 1;
 					return 1
 				},
-				bJ = function (b) {
+				bJ = function(b) {
 					var c = b.getBBox();
 					bG(b.pattern, {
 						patternTransform: a.format("translate({0},{1})", c.x, c.y)
 					})
 				},
-				bK = function (c, d) {
+				bK = function(c, d) {
 					var e = {
 							"": [0],
 							none: [0],
@@ -3907,7 +3821,7 @@ define("scripts/lib/raphael.js", function (exports) {
 						h = c.node,
 						i = c.attrs,
 						j = c.rotate(),
-						k = function (a, b) {
+						k = function(a, b) {
 							b = e[x.call(b)];
 							if (b) {
 								var c = a.attrs["stroke-width"] || "1",
@@ -3953,7 +3867,8 @@ define("scripts/lib/raphael.js", function (exports) {
 										u[l](h);
 										t = u
 									}
-									n == "target" && o == "blank" ? t.setAttributeNS(c.paper.xlink, "show", "new") : t.setAttributeNS(c.paper.xlink, n, o);
+									n == "target" && o == "blank" ? t.setAttributeNS(c.paper.xlink, "show",
+										"new") : t.setAttributeNS(c.paper.xlink, n, o);
 									break;
 								case "cursor":
 									h.style.cursor = o;
@@ -3961,7 +3876,8 @@ define("scripts/lib/raphael.js", function (exports) {
 								case "clip-rect":
 									var y = r(o)[s](b);
 									if (y[w] == 4) {
-										c.clip && c.clip.parentNode.parentNode.removeChild(c.clip.parentNode);
+										c.clip && c.clip.parentNode.parentNode.removeChild(c.clip
+											.parentNode);
 										var z = bG("clipPath"),
 											A = bG("rect");
 										z.id = bh();
@@ -3979,7 +3895,8 @@ define("scripts/lib/raphael.js", function (exports) {
 										c.clip = A
 									}
 									if (!o) {
-										var B = g.getElementById(h.getAttribute("clip-path")[Y](/(^url\(#|\)$)/g, p));
+										var B = g.getElementById(h.getAttribute("clip-path")[Y](
+											/(^url\(#|\)$)/g, p));
 										B && B.parentNode.removeChild(B);
 										bG(h, {
 											"clip-path": p
@@ -4051,7 +3968,8 @@ define("scripts/lib/raphael.js", function (exports) {
 									break;
 								case "scale":
 									C = r(o)[s](b);
-									c.scale(+C[0] || 1, +C[1] || +C[0] || 1, isNaN(S(C[2])) ? null : +C[2], isNaN(S(C[3])) ? null : +C[3]);
+									c.scale(+C[0] || 1, +C[1] || +C[0] || 1, isNaN(S(C[2])) ? null : +C[2],
+										isNaN(S(C[3])) ? null : +C[3]);
 									break;
 								case I:
 									var D = r(o).match(M);
@@ -4074,7 +3992,7 @@ define("scripts/lib/raphael.js", function (exports) {
 										z[l](E);
 										var F = g.createElement("img");
 										F.style.cssText = "position:absolute;left:-9999em;top-9999em";
-										F.onload = function () {
+										F.onload = function() {
 											bG(z, {
 												width: this.offsetWidth,
 												height: this.offsetHeight
@@ -4109,10 +4027,12 @@ define("scripts/lib/raphael.js", function (exports) {
 										} else {
 											delete d.gradient;
 											delete i.gradient;
-											!a.is(i.opacity, "undefined") && a.is(d.opacity, "undefined") && bG(h, {
-												opacity: i.opacity
-											});
-											!a.is(i["fill-opacity"], "undefined") && a.is(d["fill-opacity"], "undefined") && bG(h, {
+											!a.is(i.opacity, "undefined") && a.is(d.opacity, "undefined") &&
+												bG(h, {
+													opacity: i.opacity
+												});
+											!a.is(i["fill-opacity"], "undefined") && a.is(d["fill-opacity"],
+												"undefined") && bG(h, {
 												"fill-opacity": i["fill-opacity"]
 											})
 										} G[f]("opacity") && bG(h, {
@@ -4122,7 +4042,8 @@ define("scripts/lib/raphael.js", function (exports) {
 									G = a.getRGB(o);
 									h[R](n, G.hex);
 									n == "stroke" && G[f]("opacity") && bG(h, {
-										"stroke-opacity": G.opacity > 1 ? G.opacity / 100 : G.opacity
+										"stroke-opacity": G.opacity > 1 ? G.opacity / 100 : G
+											.opacity
 									});
 									break;
 								case "gradient":
@@ -4144,14 +4065,14 @@ define("scripts/lib/raphael.js", function (exports) {
 										}
 										break
 									}
-									default:
-										n == "font-size" && (o = T(o, 10) + "px");
-										var K = n[Y](/(\-.)/g, function (a) {
-											return V.call(a.substring(1))
-										});
-										h.style[K] = o;
-										h[R](n, o);
-										break
+								default:
+									n == "font-size" && (o = T(o, 10) + "px");
+									var K = n[Y](/(\-.)/g, function(a) {
+										return V.call(a.substring(1))
+									});
+									h.style[K] = o;
+									h[R](n, o);
+									break
 							}
 						}
 					}
@@ -4159,11 +4080,13 @@ define("scripts/lib/raphael.js", function (exports) {
 					m ? c.rotate(m.join(q)) : S(j) && c.rotate(j, true)
 				},
 				bL = 1.2,
-				bM = function (b, c) {
-					if (b.type != "text" || !(c[f]("text") || c[f]("font") || c[f]("font-size") || c[f]("x") || c[f]("y"))) return;
+				bM = function(b, c) {
+					if (b.type != "text" || !(c[f]("text") || c[f]("font") || c[f]("font-size") || c[f](
+							"x") || c[f]("y"))) return;
 					var d = b.attrs,
 						e = b.node,
-						h = e.firstChild ? T(g.defaultView.getComputedStyle(e.firstChild, p).getPropertyValue("font-size"), 10) : 10;
+						h = e.firstChild ? T(g.defaultView.getComputedStyle(e.firstChild, p)
+							.getPropertyValue("font-size"), 10) : 10;
 					if (c[f]("text")) {
 						d.text = c.text;
 						while (e.firstChild) e.removeChild(e.firstChild);
@@ -4194,7 +4117,7 @@ define("scripts/lib/raphael.js", function (exports) {
 						y: d.y + o
 					})
 				},
-				bN = function (b, c) {
+				bN = function(b, c) {
 					var d = 0,
 						e = 0;
 					this[0] = b;
@@ -4222,7 +4145,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					this.next = null
 				},
 				bO = bN[e];
-			bN[e].rotate = function (c, d, e) {
+			bN[e].rotate = function(c, d, e) {
 				if (this.removed) return this;
 				if (c == null) {
 					if (this._.rt.cx) return [this._.rt.deg, this._.rt.cx, this._.rt.cy][v](q);
@@ -4257,22 +4180,22 @@ define("scripts/lib/raphael.js", function (exports) {
 				});
 				return this
 			};
-			bN[e].hide = function () {
+			bN[e].hide = function() {
 				!this.removed && (this.node.style.display = "none");
 				return this
 			};
-			bN[e].show = function () {
+			bN[e].show = function() {
 				!this.removed && (this.node.style.display = "");
 				return this
 			};
-			bN[e].remove = function () {
+			bN[e].remove = function() {
 				if (this.removed) return;
 				bA(this, this.paper);
 				this.node.parentNode.removeChild(this.node);
 				for (var a in this) delete this[a];
 				this.removed = true
 			};
-			bN[e].getBBox = function () {
+			bN[e].getBBox = function() {
 				if (this.removed) return this;
 				if (this.type == "path") return bn(this.attrs.path);
 				if (this.node.style.display == "none") {
@@ -4302,7 +4225,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				a && this.hide();
 				return b
 			};
-			bN[e].attr = function (b, c) {
+			bN[e].attr = function(b, c) {
 				if (this.removed) return this;
 				if (b == null) {
 					var d = {};
@@ -4316,7 +4239,8 @@ define("scripts/lib/raphael.js", function (exports) {
 					if (b == "translation") return cz.call(this);
 					if (b == "rotation") return this.rotate();
 					if (b == "scale") return this.scale();
-					if (b == I && this.attrs.fill == "none" && this.attrs.gradient) return this.attrs.gradient;
+					if (b == I && this.attrs.fill == "none" && this.attrs.gradient) return this.attrs
+						.gradient;
 					return this.attrs[b]
 				}
 				if (c == null && a.is(b, G)) {
@@ -4329,21 +4253,22 @@ define("scripts/lib/raphael.js", function (exports) {
 					j[b] = c
 				} else b != null && a.is(b, "object") && (j = b);
 				for (var k in this.paper.customAttributes)
-					if (this.paper.customAttributes[f](k) && j[f](k) && a.is(this.paper.customAttributes[k], "function")) {
+					if (this.paper.customAttributes[f](k) && j[f](k) && a.is(this.paper
+							.customAttributes[k], "function")) {
 						var l = this.paper.customAttributes[k].apply(this, [][n](j[k]));
 						this.attrs[k] = j[k];
 						for (var m in l) l[f](m) && (j[m] = l[m])
 					} bK(this, j);
 				return this
 			};
-			bN[e].toFront = function () {
+			bN[e].toFront = function() {
 				if (this.removed) return this;
 				this.node.parentNode[l](this.node);
 				var a = this.paper;
 				a.top != this && bB(this, a);
 				return this
 			};
-			bN[e].toBack = function () {
+			bN[e].toBack = function() {
 				if (this.removed) return this;
 				if (this.node.parentNode.firstChild != this.node) {
 					this.node.parentNode.insertBefore(this.node, this.node.parentNode.firstChild);
@@ -4352,21 +4277,22 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				return this
 			};
-			bN[e].insertAfter = function (a) {
+			bN[e].insertAfter = function(a) {
 				if (this.removed) return this;
 				var b = a.node || a[a.length - 1].node;
-				b.nextSibling ? b.parentNode.insertBefore(this.node, b.nextSibling) : b.parentNode[l](this.node);
+				b.nextSibling ? b.parentNode.insertBefore(this.node, b.nextSibling) : b.parentNode[l](
+					this.node);
 				bD(this, a, this.paper);
 				return this
 			};
-			bN[e].insertBefore = function (a) {
+			bN[e].insertBefore = function(a) {
 				if (this.removed) return this;
 				var b = a.node || a[0].node;
 				b.parentNode.insertBefore(this.node, b);
 				bE(this, a, this.paper);
 				return this
 			};
-			bN[e].blur = function (a) {
+			bN[e].blur = function(a) {
 				var b = this;
 				if (+a !== 0) {
 					var c = bG("filter"),
@@ -4391,7 +4317,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					b.node.removeAttribute("filter")
 				}
 			};
-			var bP = function (a, b, c, d) {
+			var bP = function(a, b, c, d) {
 					var e = bG("circle");
 					a.canvas && a.canvas[l](e);
 					var f = new bN(e, a);
@@ -4406,7 +4332,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					bG(e, f.attrs);
 					return f
 				},
-				bQ = function (a, b, c, d, e, f) {
+				bQ = function(a, b, c, d, e, f) {
 					var g = bG("rect");
 					a.canvas && a.canvas[l](g);
 					var h = new bN(g, a);
@@ -4425,7 +4351,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					bG(g, h.attrs);
 					return h
 				},
-				bR = function (a, b, c, d, e) {
+				bR = function(a, b, c, d, e) {
 					var f = bG("ellipse");
 					a.canvas && a.canvas[l](f);
 					var g = new bN(f, a);
@@ -4441,7 +4367,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					bG(f, g.attrs);
 					return g
 				},
-				bS = function (a, b, c, d, e, f) {
+				bS = function(a, b, c, d, e, f) {
 					var g = bG("image");
 					bG(g, {
 						x: c,
@@ -4463,7 +4389,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					h.type = "image";
 					return h
 				},
-				bT = function (a, b, c, d) {
+				bT = function(a, b, c, d) {
 					var e = bG("text");
 					bG(e, {
 						x: b,
@@ -4485,14 +4411,14 @@ define("scripts/lib/raphael.js", function (exports) {
 					bK(f, f.attrs);
 					return f
 				},
-				bU = function (a, b) {
+				bU = function(a, b) {
 					this.width = a || this.width;
 					this.height = b || this.height;
 					this.canvas[R]("width", this.width);
 					this.canvas[R]("height", this.height);
 					return this
 				},
-				bV = function () {
+				bV = function() {
 					var b = by[m](0, arguments),
 						c = b && b.container,
 						d = b.x,
@@ -4523,7 +4449,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					c.clear();
 					return c
 				};
-			k.clear = function () {
+			k.clear = function() {
 				var a = this.canvas;
 				while (a.firstChild) a.removeChild(a.firstChild);
 				this.bottom = this.top = null;
@@ -4531,7 +4457,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				a[l](this.desc);
 				a[l](this.defs = bG("defs"))
 			};
-			k.remove = function () {
+			k.remove = function() {
 				this.canvas.parentNode && this.canvas.parentNode.removeChild(this.canvas);
 				for (var a in this) this[a] = bF(a)
 			}
@@ -4556,17 +4482,17 @@ define("scripts/lib/raphael.js", function (exports) {
 					path: 1,
 					rect: 1
 				},
-				cb = function (a) {
+				cb = function(a) {
 					var b = /[ahqstv]/ig,
 						c = bq;
 					r(a).match(b) && (c = bw);
 					b = /[clmz]/g;
 					if (c == bq && !r(a).match(b)) {
-						var d = r(a)[Y](bX, function (a, b, c) {
+						var d = r(a)[Y](bX, function(a, b, c) {
 							var d = [],
 								e = x.call(b) == "m",
 								f = bW[b];
-							c[Y](bZ, function (a) {
+							c[Y](bZ, function(a) {
 								if (e && d[w] == 2) {
 									f += d + bW[b == "m" ? "l" : "L"];
 									d = []
@@ -4589,12 +4515,14 @@ define("scripts/lib/raphael.js", function (exports) {
 					}
 					return d[v](q)
 				};
-			a[H] = function () {
-				return "Your browser doesn’t support SVG. Falling down to VML.\nYou are running Raphaël " + this.version
+			a[H] = function() {
+				return "Your browser doesn’t support SVG. Falling down to VML.\nYou are running Raphaël " +
+					this.version
 			};
-			bH = function (a, b) {
+			bH = function(a, b) {
 				var c = cd("group");
-				c.style.cssText = "position:absolute;left:0;top:0;width:" + b.width + "px;height:" + b.height + "px";
+				c.style.cssText = "position:absolute;left:0;top:0;width:" + b.width + "px;height:" + b
+					.height + "px";
 				c.coordsize = b.coordsize;
 				c.coordorigin = b.coordorigin;
 				var d = cd("shape"),
@@ -4617,12 +4545,13 @@ define("scripts/lib/raphael.js", function (exports) {
 				b.canvas[l](c);
 				return f
 			};
-			bK = function (c, d) {
+			bK = function(c, d) {
 				c.attrs = c.attrs || {};
 				var e = c.node,
 					h = c.attrs,
 					i = e.style,
-					j, k = (d.x != h.x || d.y != h.y || d.width != h.width || d.height != h.height || d.r != h.r) && c.type == "rect",
+					j, k = (d.x != h.x || d.y != h.y || d.width != h.width || d.height != h.height || d
+						.r != h.r) && c.type == "rect",
 					m = c;
 				for (var n in d) d[f](n) && (h[n] = d[n]);
 				if (k) {
@@ -4680,17 +4609,23 @@ define("scripts/lib/raphael.js", function (exports) {
 					i.filter = (e.filterMatrix || p) + (e.filterOpacity || p)
 				}
 				d.font && (i.font = d.font);
-				d["font-family"] && (i.fontFamily = "\"" + d["font-family"][s](",")[0][Y](/^['"]+|['"]+$/g, p) + "\"");
+				d["font-family"] && (i.fontFamily = "\"" + d["font-family"][s](",")[0][Y](
+					/^['"]+|['"]+$/g, p) + "\"");
 				d["font-size"] && (i.fontSize = d["font-size"]);
 				d["font-weight"] && (i.fontWeight = d["font-weight"]);
 				d["font-style"] && (i.fontStyle = d["font-style"]);
-				if (d.opacity != null || d["stroke-width"] != null || d.fill != null || d.stroke != null || d["stroke-width"] != null || d["stroke-opacity"] != null || d["fill-opacity"] != null || d["stroke-dasharray"] != null || d["stroke-miterlimit"] != null || d["stroke-linejoin"] != null || d["stroke-linecap"] != null) {
+				if (d.opacity != null || d["stroke-width"] != null || d.fill != null || d.stroke !=
+					null || d["stroke-width"] != null || d["stroke-opacity"] != null || d[
+						"fill-opacity"] != null || d["stroke-dasharray"] != null || d[
+						"stroke-miterlimit"] != null || d["stroke-linejoin"] != null || d[
+						"stroke-linecap"] != null) {
 					e = c.shape || e;
 					var v = e.getElementsByTagName(I) && e.getElementsByTagName(I)[0],
 						x = false;
 					!v && (x = v = cd(I));
 					if ("fill-opacity" in d || "opacity" in d) {
-						var y = ((+h["fill-opacity"] + 1 || 2) - 1) * ((+h.opacity + 1 || 2) - 1) * ((+a.getRGB(d.fill).o + 1 || 2) - 1);
+						var y = ((+h["fill-opacity"] + 1 || 2) - 1) * ((+h.opacity + 1 || 2) - 1) * ((+a
+							.getRGB(d.fill).o + 1 || 2) - 1);
 						y = A(z(y, 0), 1);
 						v.opacity = y
 					}
@@ -4718,11 +4653,15 @@ define("scripts/lib/raphael.js", function (exports) {
 					var C = e.getElementsByTagName("stroke") && e.getElementsByTagName("stroke")[0],
 						D = false;
 					!C && (D = C = cd("stroke"));
-					if (d.stroke && d.stroke != "none" || d["stroke-width"] || d["stroke-opacity"] != null || d["stroke-dasharray"] || d["stroke-miterlimit"] || d["stroke-linejoin"] || d["stroke-linecap"]) C.on = true;
-					(d.stroke == "none" || C.on == null || d.stroke == 0 || d["stroke-width"] == 0) && (C.on = false);
+					if (d.stroke && d.stroke != "none" || d["stroke-width"] || d["stroke-opacity"] !=
+						null || d["stroke-dasharray"] || d["stroke-miterlimit"] || d[
+							"stroke-linejoin"] || d["stroke-linecap"]) C.on = true;
+					(d.stroke == "none" || C.on == null || d.stroke == 0 || d["stroke-width"] == 0) && (
+						C.on = false);
 					var E = a.getRGB(d.stroke);
 					C.on && d.stroke && (C.color = E.hex);
-					y = ((+h["stroke-opacity"] + 1 || 2) - 1) * ((+h.opacity + 1 || 2) - 1) * ((+E.o + 1 || 2) - 1);
+					y = ((+h["stroke-opacity"] + 1 || 2) - 1) * ((+h.opacity + 1 || 2) - 1) * ((+E.o +
+						1 || 2) - 1);
 					var F = (S(d["stroke-width"]) || 1) * 0.75;
 					y = A(z(y, 0), 1);
 					d["stroke-width"] == null && (F = h["stroke-width"]);
@@ -4731,7 +4670,8 @@ define("scripts/lib/raphael.js", function (exports) {
 					C.opacity = y;
 					d["stroke-linejoin"] && (C.joinstyle = d["stroke-linejoin"] || "miter");
 					C.miterlimit = d["stroke-miterlimit"] || 8;
-					d["stroke-linecap"] && (C.endcap = d["stroke-linecap"] == "butt" ? "flat" : d["stroke-linecap"] == "square" ? "square" : "round");
+					d["stroke-linecap"] && (C.endcap = d["stroke-linecap"] == "butt" ? "flat" : d[
+						"stroke-linecap"] == "square" ? "square" : "round");
 					if (d["stroke-dasharray"]) {
 						var G = {
 							"-": "shortdash",
@@ -4756,7 +4696,8 @@ define("scripts/lib/raphael.js", function (exports) {
 					h["font-size"] && (i.fontSize = h["font-size"]);
 					h["font-weight"] && (i.fontWeight = h["font-weight"]);
 					h["font-style"] && (i.fontStyle = h["font-style"]);
-					m.node.string && (m.paper.span.innerHTML = r(m.node.string)[Y](/</g, "&#60;")[Y](/&/g, "&#38;")[Y](/\n/g, "<br>"));
+					m.node.string && (m.paper.span.innerHTML = r(m.node.string)[Y](/</g, "&#60;")[Y](
+						/&/g, "&#38;")[Y](/\n/g, "<br>"));
 					m.W = h.w = m.paper.span.offsetWidth;
 					m.H = h.h = m.paper.span.offsetHeight;
 					m.X = h.x;
@@ -4776,18 +4717,19 @@ define("scripts/lib/raphael.js", function (exports) {
 					}
 				}
 			};
-			bI = function (a, b) {
+			bI = function(a, b) {
 				a.attrs = a.attrs || {};
 				var c = a.attrs,
 					d, e = "linear",
 					f = ".5 .5";
 				a.attrs.gradient = b;
-				b = r(b)[Y](bd, function (a, b, c) {
+				b = r(b)[Y](bd, function(a, b, c) {
 					e = "radial";
 					if (b && c) {
 						b = S(b);
 						c = S(c);
-						C(b - 0.5, 2) + C(c - 0.5, 2) > 0.25 && (c = y.sqrt(0.25 - C(b - 0.5, 2)) * ((c > 0.5) * 2 - 1) + 0.5);
+						C(b - 0.5, 2) + C(c - 0.5, 2) > 0.25 && (c = y.sqrt(0.25 - C(b - 0.5,
+							2)) * ((c > 0.5) * 2 - 1) + 0.5);
 						f = b + q + c
 					}
 					return p
@@ -4809,7 +4751,8 @@ define("scripts/lib/raphael.js", function (exports) {
 					d.color = h[0].color;
 					d.color2 = h[h[w] - 1].color;
 					var i = [];
-					for (var j = 0, k = h[w]; j < k; j++) h[j].offset && i[L](h[j].offset + q + h[j].color);
+					for (var j = 0, k = h[w]; j < k; j++) h[j].offset && i[L](h[j].offset + q + h[j]
+						.color);
 					d.colors && (d.colors.value = i[w] ? i[v]() : "0% " + d.color);
 					if (e == "radial") {
 						d.type = "gradientradial";
@@ -4823,7 +4766,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				return 1
 			};
-			bN = function (b, c, d) {
+			bN = function(b, c, d) {
 				var e = 0,
 					f = 0,
 					g = 0,
@@ -4853,7 +4796,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				this.next = null
 			};
 			bO = bN[e];
-			bO.rotate = function (a, c, d) {
+			bO.rotate = function(a, c, d) {
 				if (this.removed) return this;
 				if (a == null) {
 					if (this._.rt.cx) return [this._.rt.deg, this._.rt.cx, this._.rt.cy][v](q);
@@ -4873,7 +4816,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				this.Group.style.rotation = this._.rt.deg;
 				return this
 			};
-			bO.setBox = function (a, b, c) {
+			bO.setBox = function(a, b, c) {
 				if (this.removed) return this;
 				var d = this.Group.style,
 					e = this.shape && this.shape.style || this.node.style;
@@ -4902,7 +4845,8 @@ define("scripts/lib/raphael.js", function (exports) {
 						l = h.height || 0;
 						break;
 					case "text":
-						this.textpath.v = ["m", Q(h.x), ", ", Q(h.y - 2), "l", Q(h.x) + 1, ", ", Q(h.y - 2)][v](p);
+						this.textpath.v = ["m", Q(h.x), ", ", Q(h.y - 2), "l", Q(h.x) + 1, ", ", Q(h.y -
+							2)][v](p);
 						i = h.x - Q(this.W / 2);
 						j = h.y - this.H / 2;
 						k = this.W;
@@ -4956,15 +4900,15 @@ define("scripts/lib/raphael.js", function (exports) {
 					e.height != (q = l + "px") && (e.height = q)
 				}
 			};
-			bO.hide = function () {
+			bO.hide = function() {
 				!this.removed && (this.Group.style.display = "none");
 				return this
 			};
-			bO.show = function () {
+			bO.show = function() {
 				!this.removed && (this.Group.style.display = "block");
 				return this
 			};
-			bO.getBBox = function () {
+			bO.getBBox = function() {
 				if (this.removed) return this;
 				if (ca[f](this.type)) return bn(this.attrs.path);
 				return {
@@ -4974,7 +4918,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					height: this.H
 				}
 			};
-			bO.remove = function () {
+			bO.remove = function() {
 				if (this.removed) return;
 				bA(this, this.paper);
 				this.node.parentNode.removeChild(this.node);
@@ -4983,7 +4927,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				for (var a in this) delete this[a];
 				this.removed = true
 			};
-			bO.attr = function (b, c) {
+			bO.attr = function(b, c) {
 				if (this.removed) return this;
 				if (b == null) {
 					var d = {};
@@ -4997,7 +4941,8 @@ define("scripts/lib/raphael.js", function (exports) {
 					if (b == "translation") return cz.call(this);
 					if (b == "rotation") return this.rotate();
 					if (b == "scale") return this.scale();
-					if (b == I && this.attrs.fill == "none" && this.attrs.gradient) return this.attrs.gradient;
+					if (b == I && this.attrs.fill == "none" && this.attrs.gradient) return this.attrs
+						.gradient;
 					return this.attrs[b]
 				}
 				if (this.attrs && c == null && a.is(b, G)) {
@@ -5013,7 +4958,8 @@ define("scripts/lib/raphael.js", function (exports) {
 				c == null && a.is(b, "object") && (i = b);
 				if (i) {
 					for (var j in this.paper.customAttributes)
-						if (this.paper.customAttributes[f](j) && i[f](j) && a.is(this.paper.customAttributes[j], "function")) {
+						if (this.paper.customAttributes[f](j) && i[f](j) && a.is(this.paper
+								.customAttributes[j], "function")) {
 							var k = this.paper.customAttributes[j].apply(this, [][n](i[j]));
 							this.attrs[j] = i[j];
 							for (var l in k) k[f](l) && (i[l] = k[l])
@@ -5027,12 +4973,12 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				return this
 			};
-			bO.toFront = function () {
+			bO.toFront = function() {
 				!this.removed && this.Group.parentNode[l](this.Group);
 				this.paper.top != this && bB(this, this.paper);
 				return this
 			};
-			bO.toBack = function () {
+			bO.toBack = function() {
 				if (this.removed) return this;
 				if (this.Group.parentNode.firstChild != this.Group) {
 					this.Group.parentNode.insertBefore(this.Group, this.Group.parentNode.firstChild);
@@ -5040,21 +4986,22 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				return this
 			};
-			bO.insertAfter = function (a) {
+			bO.insertAfter = function(a) {
 				if (this.removed) return this;
 				a.constructor == cC && (a = a[a.length - 1]);
-				a.Group.nextSibling ? a.Group.parentNode.insertBefore(this.Group, a.Group.nextSibling) : a.Group.parentNode[l](this.Group);
+				a.Group.nextSibling ? a.Group.parentNode.insertBefore(this.Group, a.Group.nextSibling) :
+					a.Group.parentNode[l](this.Group);
 				bD(this, a, this.paper);
 				return this
 			};
-			bO.insertBefore = function (a) {
+			bO.insertBefore = function(a) {
 				if (this.removed) return this;
 				a.constructor == cC && (a = a[0]);
 				a.Group.parentNode.insertBefore(this.Group, a.Group);
 				bE(this, a, this.paper);
 				return this
 			};
-			bO.blur = function (b) {
+			bO.blur = function(b) {
 				var c = this.node.runtimeStyle,
 					d = c.filter;
 				d = d.replace(bY, p);
@@ -5068,11 +5015,12 @@ define("scripts/lib/raphael.js", function (exports) {
 					delete this.attrs.blur
 				}
 			};
-			bP = function (a, b, c, d) {
+			bP = function(a, b, c, d) {
 				var e = cd("group"),
 					f = cd("oval"),
 					g = f.style;
-				e.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a.height + "px";
+				e.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a
+					.height + "px";
 				e.coordsize = b$;
 				e.coordorigin = a.coordorigin;
 				e[l](f);
@@ -5096,9 +5044,12 @@ define("scripts/lib/raphael.js", function (exports) {
 			};
 
 			function cc(b, c, d, e, f) {
-				return f ? a.format("M{0},{1}l{2},0a{3},{3},0,0,1,{3},{3}l0,{5}a{3},{3},0,0,1,{4},{3}l{6},0a{3},{3},0,0,1,{4},{4}l0,{7}a{3},{3},0,0,1,{3},{4}z", b + f, c, d - f * 2, f, -f, e - f * 2, f * 2 - d, f * 2 - e) : a.format("M{0},{1}l{2},0,0,{3},{4},0z", b, c, d, e, -d)
+				return f ? a.format(
+					"M{0},{1}l{2},0a{3},{3},0,0,1,{3},{3}l0,{5}a{3},{3},0,0,1,{4},{3}l{6},0a{3},{3},0,0,1,{4},{4}l0,{7}a{3},{3},0,0,1,{3},{4}z",
+					b + f, c, d - f * 2, f, -f, e - f * 2, f * 2 - d, f * 2 - e) : a.format(
+					"M{0},{1}l{2},0,0,{3},{4},0z", b, c, d, e, -d)
 			}
-			bQ = function (a, b, c, d, e, f) {
+			bQ = function(a, b, c, d, e, f) {
 				var g = cc(b, c, d, e, f),
 					h = a.path(g),
 					i = h.attrs;
@@ -5111,11 +5062,12 @@ define("scripts/lib/raphael.js", function (exports) {
 				h.type = "rect";
 				return h
 			};
-			bR = function (a, b, c, d, e) {
+			bR = function(a, b, c, d, e) {
 				var f = cd("group"),
 					g = cd("oval"),
 					h = g.style;
-				f.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a.height + "px";
+				f.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a
+					.height + "px";
 				f.coordsize = b$;
 				f.coordorigin = a.coordorigin;
 				f[l](g);
@@ -5137,10 +5089,11 @@ define("scripts/lib/raphael.js", function (exports) {
 				a.canvas[l](f);
 				return i
 			};
-			bS = function (a, b, c, d, e, f) {
+			bS = function(a, b, c, d, e, f) {
 				var g = cd("group"),
 					h = cd("image");
-				g.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a.height + "px";
+				g.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a
+					.height + "px";
 				g.coordsize = b$;
 				g.coordorigin = a.coordorigin;
 				h.src = b;
@@ -5161,14 +5114,15 @@ define("scripts/lib/raphael.js", function (exports) {
 				a.canvas[l](g);
 				return i
 			};
-			bT = function (b, c, d, e) {
+			bT = function(b, c, d, e) {
 				var f = cd("group"),
 					g = cd("shape"),
 					h = g.style,
 					i = cd("path"),
 					j = i.style,
 					k = cd("textpath");
-				f.style.cssText = "position:absolute;left:0;top:0;width:" + b.width + "px;height:" + b.height + "px";
+				f.style.cssText = "position:absolute;left:0;top:0;width:" + b.width + "px;height:" + b
+					.height + "px";
 				f.coordsize = b$;
 				f.coordorigin = b.coordorigin;
 				i.v = a.format("m{0},{1}l{2},{1}", Q(c * 10), Q(d * 10), Q(c * 10) + 1);
@@ -5198,7 +5152,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				b.canvas[l](f);
 				return m
 			};
-			bU = function (a, b) {
+			bU = function(a, b) {
 				var c = this.canvas.style;
 				a == +a && (a += "px");
 				b == +b && (b += "px");
@@ -5211,15 +5165,16 @@ define("scripts/lib/raphael.js", function (exports) {
 			g.createStyleSheet().addRule(".rvml", "behavior:url(#default#VML)");
 			try {
 				!g.namespaces.rvml && g.namespaces.add("rvml", "urn:schemas-microsoft-com:vml");
-				cd = function (a) {
+				cd = function(a) {
 					return g.createElement("<rvml:" + a + " class=\"rvml\">")
 				}
 			} catch (a) {
-				cd = function (a) {
-					return g.createElement("<" + a + " xmlns=\"urn:schemas-microsoft.com:vml\" class=\"rvml\">")
+				cd = function(a) {
+					return g.createElement("<" + a +
+						" xmlns=\"urn:schemas-microsoft.com:vml\" class=\"rvml\">")
 				}
 			}
-			bV = function () {
+			bV = function() {
 				var b = by[m](0, arguments),
 					c = b.container,
 					d = b.height,
@@ -5241,9 +5196,12 @@ define("scripts/lib/raphael.js", function (exports) {
 				k.coordsize = b_ * 1000 + q + b_ * 1000;
 				k.coordorigin = "0 0";
 				k.span = g.createElement("span");
-				k.span.style.cssText = "position:absolute;left:-9999em;top:-9999em;padding:0;margin:0;line-height:1;display:inline;";
+				k.span.style.cssText =
+					"position:absolute;left:-9999em;top:-9999em;padding:0;margin:0;line-height:1;display:inline;";
 				n[l](k.span);
-				o.cssText = a.format("top:0;left:0;width:{0};height:{1};display:inline-block;position:relative;clip:rect(0 {0} {1} 0);overflow:hidden", f, d);
+				o.cssText = a.format(
+					"top:0;left:0;width:{0};height:{1};display:inline-block;position:relative;clip:rect(0 {0} {1} 0);overflow:hidden",
+					f, d);
 				if (c == 1) {
 					g.body[l](n);
 					o.left = h + "px";
@@ -5253,47 +5211,50 @@ define("scripts/lib/raphael.js", function (exports) {
 				bz.call(k, k, a.fn);
 				return k
 			};
-			k.clear = function () {
+			k.clear = function() {
 				this.canvas.innerHTML = p;
 				this.span = g.createElement("span");
-				this.span.style.cssText = "position:absolute;left:-9999em;top:-9999em;padding:0;margin:0;line-height:1;display:inline;";
+				this.span.style.cssText =
+					"position:absolute;left:-9999em;top:-9999em;padding:0;margin:0;line-height:1;display:inline;";
 				this.canvas[l](this.span);
 				this.bottom = this.top = null
 			};
-			k.remove = function () {
+			k.remove = function() {
 				this.canvas.parentNode.removeChild(this.canvas);
 				for (var a in this) this[a] = bF(a);
 				return true
 			}
 		}
 		var ce = navigator.userAgent.match(/Version\\x2f(.*?)\s/);
-		navigator.vendor == "Apple Computer, Inc." && (ce && ce[1] < 4 || navigator.platform.slice(0, 2) == "iP") ? k.safari = function () {
+		navigator.vendor == "Apple Computer, Inc." && (ce && ce[1] < 4 || navigator.platform.slice(0, 2) ==
+			"iP") ? k.safari = function() {
 			var a = this.rect(-99, -99, this.width + 99, this.height + 99).attr({
 				stroke: "none"
 			});
-			h.setTimeout(function () {
+			h.setTimeout(function() {
 				a.remove()
 			})
-		} : k.safari = function () {};
-		var cf = function () {
+		} : k.safari = function() {};
+		var cf = function() {
 				this.returnValue = false
 			},
-			cg = function () {
+			cg = function() {
 				return this.originalEvent.preventDefault()
 			},
-			ch = function () {
+			ch = function() {
 				this.cancelBubble = true
 			},
-			ci = function () {
+			ci = function() {
 				return this.originalEvent.stopPropagation()
 			},
-			cj = (function () {
+			cj = (function() {
 				{
-					if (g.addEventListener) return function (a, b, c, d) {
+					if (g.addEventListener) return function(a, b, c, d) {
 						var e = o && u[b] ? u[b] : b,
-							g = function (e) {
+							g = function(e) {
 								if (o && u[f](b))
-									for (var g = 0, h = e.targetTouches && e.targetTouches.length; g < h; g++) {
+									for (var g = 0, h = e.targetTouches && e.targetTouches
+											.length; g < h; g++) {
 										if (e.targetTouches[g].target == a) {
 											var i = e;
 											e = e.targetTouches[g];
@@ -5306,20 +5267,20 @@ define("scripts/lib/raphael.js", function (exports) {
 								return c.call(d, e)
 							};
 						a.addEventListener(e, g, false);
-						return function () {
+						return function() {
 							a.removeEventListener(e, g, false);
 							return true
 						}
 					};
-					if (g.attachEvent) return function (a, b, c, d) {
-						var e = function (a) {
+					if (g.attachEvent) return function(a, b, c, d) {
+						var e = function(a) {
 							a = a || h.event;
 							a.preventDefault = a.preventDefault || cf;
 							a.stopPropagation = a.stopPropagation || ch;
 							return c.call(d, a)
 						};
 						a.attachEvent("on" + b, e);
-						var f = function () {
+						var f = function() {
 							a.detachEvent("on" + b, e);
 							return true
 						};
@@ -5328,7 +5289,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 			})(),
 			ck = [],
-			cl = function (a) {
+			cl = function(a) {
 				var b = a.clientX,
 					c = a.clientY,
 					d = g.documentElement.scrollTop || g.body.scrollTop,
@@ -5354,7 +5315,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					f.move && f.move.call(f.move_scope || f.el, b - f.el._drag.x, c - f.el._drag.y, b, c, a)
 				}
 			},
-			cm = function (b) {
+			cm = function(b) {
 				a.unmousemove(cl).unmouseup(cm);
 				var c = ck.length,
 					d;
@@ -5365,8 +5326,8 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				ck = []
 			};
-		for (var cn = t[w]; cn--;)(function (b) {
-			a[b] = bN[e][b] = function (c, d) {
+		for (var cn = t[w]; cn--;)(function(b) {
+			a[b] = bN[e][b] = function(c, d) {
 				if (a.is(c, "function")) {
 					this.events = this.events || [];
 					this.events.push({
@@ -5377,7 +5338,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				return this
 			};
-			a["un" + b] = bN[e]["un" + b] = function (a) {
+			a["un" + b] = bN[e]["un" + b] = function(a) {
 				var c = this.events,
 					d = c[w];
 				while (d--)
@@ -5389,15 +5350,15 @@ define("scripts/lib/raphael.js", function (exports) {
 					} return this
 			}
 		})(t[cn]);
-		bO.hover = function (a, b, c, d) {
+		bO.hover = function(a, b, c, d) {
 			return this.mouseover(a, c).mouseout(b, d || c)
 		};
-		bO.unhover = function (a, b) {
+		bO.unhover = function(a, b) {
 			return this.unmouseover(a).unmouseout(b)
 		};
-		bO.drag = function (b, c, d, e, f, h) {
+		bO.drag = function(b, c, d, e, f, h) {
 			this._drag = {};
-			this.mousedown(function (i) {
+			this.mousedown(function(i) {
 				(i.originalEvent || i).preventDefault();
 				var j = g.documentElement.scrollTop || g.body.scrollTop,
 					k = g.documentElement.scrollLeft || g.body.scrollLeft;
@@ -5417,31 +5378,31 @@ define("scripts/lib/raphael.js", function (exports) {
 			});
 			return this
 		};
-		bO.undrag = function (b, c, d) {
+		bO.undrag = function(b, c, d) {
 			var e = ck.length;
 			while (e--) ck[e].el == this && (ck[e].move == b && ck[e].end == d) && ck.splice(e++, 1);
 			!ck.length && a.unmousemove(cl).unmouseup(cm)
 		};
-		k.circle = function (a, b, c) {
+		k.circle = function(a, b, c) {
 			return bP(this, a || 0, b || 0, c || 0)
 		};
-		k.rect = function (a, b, c, d, e) {
+		k.rect = function(a, b, c, d, e) {
 			return bQ(this, a || 0, b || 0, c || 0, d || 0, e || 0)
 		};
-		k.ellipse = function (a, b, c, d) {
+		k.ellipse = function(a, b, c, d) {
 			return bR(this, a || 0, b || 0, c || 0, d || 0)
 		};
-		k.path = function (b) {
+		k.path = function(b) {
 			b && !a.is(b, F) && !a.is(b[0], G) && (b += p);
 			return bH(a.format[m](a, arguments), this)
 		};
-		k.image = function (a, b, c, d, e) {
+		k.image = function(a, b, c, d, e) {
 			return bS(this, a || "about:blank", b || 0, c || 0, d || 0, e || 0)
 		};
-		k.text = function (a, b, c) {
+		k.text = function(a, b, c) {
 			return bT(this, a || 0, b || 0, r(c))
 		};
-		k.set = function (a) {
+		k.set = function(a) {
 			arguments[w] > 1 && (a = Array[e].splice.call(arguments, 0, arguments[w]));
 			return new cC(a)
 		};
@@ -5452,13 +5413,13 @@ define("scripts/lib/raphael.js", function (exports) {
 		function co() {
 			return this.x + q + this.y
 		}
-		bO.resetScale = function () {
+		bO.resetScale = function() {
 			if (this.removed) return this;
 			this._.sx = 1;
 			this._.sy = 1;
 			this.attrs.scale = "1 1"
 		};
-		bO.scale = function (a, b, c, d) {
+		bO.scale = function(a, b, c, d) {
 			if (this.removed) return this;
 			if (a == null && b == null) return {
 				x: this._.sx,
@@ -5565,7 +5526,8 @@ define("scripts/lib/raphael.js", function (exports) {
 						i.fx = t - 1;
 						i.fy = u - 1
 					} else {
-						this.node.filterMatrix = U + ".Matrix(M11=" [n](t, ", M12=0, M21=0, M22=", u, ", Dx=0, Dy=0, sizingmethod='auto expand', filtertype='bilinear')");
+						this.node.filterMatrix = U + ".Matrix(M11=" [n](t, ", M12=0, M21=0, M22=", u,
+							", Dx=0, Dy=0, sizingmethod='auto expand', filtertype='bilinear')");
 						z.filter = (this.node.filterMatrix || p) + (this.node.filterOpacity || p)
 					}
 				else if (this.transformations) {
@@ -5583,7 +5545,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 			return this
 		};
-		bO.clone = function () {
+		bO.clone = function() {
 			if (this.removed) return null;
 			var a = this.attr();
 			delete a.scale;
@@ -5591,7 +5553,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			return this.paper[this.type]().attr(a)
 		};
 		var cp = {},
-			cq = function (b, c, d, e, f, g, h, i, j) {
+			cq = function(b, c, d, e, f, g, h, i, j) {
 				var k = 0,
 					l = 100,
 					m = [b, c, d, e, f, g, h, i].join(),
@@ -5601,7 +5563,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					data: []
 				});
 				n.timer && clearTimeout(n.timer);
-				n.timer = setTimeout(function () {
+				n.timer = setTimeout(function() {
 					delete cp[m]
 				}, 2000);
 				if (j != null) {
@@ -5620,8 +5582,8 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				if (j == null) return k
 			},
-			cr = function (b, c) {
-				return function (d, e, f) {
+			cr = function(b, c) {
+				return function(d, e, f) {
 					d = bw(d);
 					var g, h, i, j, k = "",
 						l = {},
@@ -5639,7 +5601,8 @@ define("scripts/lib/raphael.js", function (exports) {
 									k += ["C", m.start.x, m.start.y, m.m.x, m.m.y, m.x, m.y];
 									if (f) return k;
 									l.start = k;
-									k = ["M", m.x, m.y + "C", m.n.x, m.n.y, m.end.x, m.end.y, i[5], i[6]][v]();
+									k = ["M", m.x, m.y + "C", m.n.x, m.n.y, m.end.x, m.end.y, i[5], i[
+										6]][v]();
 									n += j;
 									g = +i[5];
 									h = +i[6];
@@ -5661,7 +5624,8 @@ define("scripts/lib/raphael.js", function (exports) {
 						k += i
 					}
 					l.end = k;
-					m = b ? n : c ? l : a.findDotsAtSegment(g, h, i[1], i[2], i[3], i[4], i[5], i[6], 1);
+					m = b ? n : c ? l : a.findDotsAtSegment(g, h, i[1], i[2], i[3], i[4], i[5], i[6],
+						1);
 					m.alpha && (m = {
 						x: m.x,
 						y: m.y,
@@ -5673,53 +5637,53 @@ define("scripts/lib/raphael.js", function (exports) {
 			cs = cr(1),
 			ct = cr(),
 			cu = cr(0, 1);
-		bO.getTotalLength = function () {
+		bO.getTotalLength = function() {
 			if (this.type != "path") return;
 			if (this.node.getTotalLength) return this.node.getTotalLength();
 			return cs(this.attrs.path)
 		};
-		bO.getPointAtLength = function (a) {
+		bO.getPointAtLength = function(a) {
 			if (this.type != "path") return;
 			return ct(this.attrs.path, a)
 		};
-		bO.getSubpath = function (a, b) {
+		bO.getSubpath = function(a, b) {
 			if (this.type != "path") return;
 			if (B(this.getTotalLength() - b) < "1e-6") return cu(this.attrs.path, a).end;
 			var c = cu(this.attrs.path, b, 1);
 			return a ? cu(c, a).end : c
 		};
 		a.easing_formulas = {
-			linear: function (a) {
+			linear: function(a) {
 				return a
 			},
-			"<": function (a) {
+			"<": function(a) {
 				return C(a, 3)
 			},
-			">": function (a) {
+			">": function(a) {
 				return C(a - 1, 3) + 1
 			},
-			"<>": function (a) {
+			"<>": function(a) {
 				a = a * 2;
 				if (a < 1) return C(a, 3) / 2;
 				a -= 2;
 				return (C(a, 3) + 2) / 2
 			},
-			backIn: function (a) {
+			backIn: function(a) {
 				var b = 1.70158;
 				return a * a * ((b + 1) * a - b)
 			},
-			backOut: function (a) {
+			backOut: function(a) {
 				a = a - 1;
 				var b = 1.70158;
 				return a * a * ((b + 1) * a + b) + 1
 			},
-			elastic: function (a) {
+			elastic: function(a) {
 				if (a == 0 || a == 1) return a;
 				var b = 0.3,
 					c = b / 4;
 				return C(2, -10 * a) * y.sin((a - c) * (2 * D) / b) + 1
 			},
-			bounce: function (a) {
+			bounce: function(a) {
 				var b = 7.5625,
 					c = 2.75,
 					d;
@@ -5738,7 +5702,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 		};
 		var cv = [],
-			cw = function () {
+			cw = function() {
 				var b = +(new Date);
 				for (var c = 0; c < cv[w]; c++) {
 					var d = cv[c];
@@ -5772,13 +5736,16 @@ define("scripts/lib/raphael.js", function (exports) {
 										o = +i[s] + r * g * j[s];
 										break;
 									case "colour":
-										o = "rgb(" + [cy(Q(i[s].r + r * g * j[s].r)), cy(Q(i[s].g + r * g * j[s].g)), cy(Q(i[s].b + r * g * j[s].b))][v](",") + ")";
+										o = "rgb(" + [cy(Q(i[s].r + r * g * j[s].r)), cy(Q(i[s].g + r * g *
+											j[s].g)), cy(Q(i[s].b + r * g * j[s].b))][v](",") + ")";
 										break;
 									case "path":
 										o = [];
 										for (var u = 0, x = i[s][w]; u < x; u++) {
 											o[u] = [i[s][u][0]];
-											for (var y = 1, z = i[s][u][w]; y < z; y++) o[u][y] = +i[s][u][y] + r * g * j[s][u][y];
+											for (var y = 1, z = i[s][u][w]; y < z; y++) o[u][y] = +i[s][u][
+												y
+											] + r * g * j[s][u][y];
 											o[u] = o[u][v](q)
 										}
 										o = o[v](q);
@@ -5797,7 +5764,9 @@ define("scripts/lib/raphael.js", function (exports) {
 												i[s][1] && (o += "," + i[s][1] + "," + i[s][2]);
 												break;
 											case "scale":
-												o = [+i[s][0] + r * g * j[s][0], +i[s][1] + r * g * j[s][1], 2 in k[s] ? k[s][2] : p, 3 in k[s] ? k[s][3] : p][v](q);
+												o = [+i[s][0] + r * g * j[s][0], +i[s][1] + r * g * j[s][1],
+													2 in k[s] ? k[s][2] : p, 3 in k[s] ? k[s][3] : p
+												][v](q);
 												break;
 											case "clip-rect":
 												o = [];
@@ -5830,17 +5799,17 @@ define("scripts/lib/raphael.js", function (exports) {
 				a.svg && m && m.paper && m.paper.safari();
 				cv[w] && setTimeout(cw)
 			},
-			cx = function (b, c, d, e, f) {
+			cx = function(b, c, d, e, f) {
 				var g = d - e;
-				c.timeouts.push(setTimeout(function () {
+				c.timeouts.push(setTimeout(function() {
 					a.is(f, "function") && f.call(c);
 					c.animate(b, g, b.easing)
 				}, e))
 			},
-			cy = function (a) {
+			cy = function(a) {
 				return z(A(a, 255), 0)
 			},
-			cz = function (a, b) {
+			cz = function(a, b) {
 				if (a == null) return {
 					x: this._.tx,
 					y: this._.ty,
@@ -5875,7 +5844,7 @@ define("scripts/lib/raphael.js", function (exports) {
 				}
 				return this
 			};
-		bO.animateWith = function (a, b, c, d, e) {
+		bO.animateWith = function(a, b, c, d, e) {
 			for (var f = 0, g = cv.length; f < g; f++) cv[f].el.id == a.id && (b.start = cv[f].start);
 			return this.animate(b, c, d, e)
 		};
@@ -5883,7 +5852,7 @@ define("scripts/lib/raphael.js", function (exports) {
 		bO.animateAlongBack = cA(1);
 
 		function cA(b) {
-			return function (c, d, e, f) {
+			return function(c, d, e, f) {
 				var g = {
 					back: b
 				};
@@ -5935,11 +5904,11 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 			return n(a, 1 / (200 * f))
 		}
-		bO.onAnimation = function (a) {
+		bO.onAnimation = function(a) {
 			this._run = a || 0;
 			return this
 		};
-		bO.animate = function (c, d, e, g) {
+		bO.animate = function(c, d, e, g) {
 			var h = this;
 			h.timeouts = h.timeouts || [];
 			if (a.is(e, "function") || !e) g = e || null;
@@ -5992,7 +5961,8 @@ define("scripts/lib/raphael.js", function (exports) {
 								l[m] = [];
 								for (var v = 0, x = i[m][w]; v < x; v++) {
 									l[m][v] = [0];
-									for (var y = 1, z = i[m][v][w]; y < z; y++) l[m][v][y] = (u[v][y] - i[m][v][y]) / d
+									for (var y = 1, z = i[m][v][w]; y < z; y++) l[m][v][y] = (u[v][y] -
+										i[m][v][y]) / d
 								}
 								break;
 							case "csv":
@@ -6036,10 +6006,10 @@ define("scripts/lib/raphael.js", function (exports) {
 					G = r(e).match(P);
 					if (G && G[w] == 5) {
 						var H = G;
-						G = function (a) {
+						G = function(a) {
 							return cB(a, +H[1], +H[2], +H[3], +H[4], d)
 						}
-					} else G = function (a) {
+					} else G = function(a) {
 						return a
 					}
 				}
@@ -6056,7 +6026,7 @@ define("scripts/lib/raphael.js", function (exports) {
 						y: 0
 					}
 				});
-				a.is(g, "function") && (h._ac = setTimeout(function () {
+				a.is(g, "function") && (h._ac = setTimeout(function() {
 					g.call(h)
 				}, d));
 				cv[w] == 1 && setTimeout(cw)
@@ -6077,32 +6047,34 @@ define("scripts/lib/raphael.js", function (exports) {
 					key: 0,
 					value: h.attrs
 				});
-				for (v = 0, x = C[w]; v < x; v++) cx(C[v].value, h, d / 100 * C[v].key, d / 100 * (C[v - 1] && C[v - 1].key || 0), C[v - 1] && C[v - 1].value.callback);
+				for (v = 0, x = C[w]; v < x; v++) cx(C[v].value, h, d / 100 * C[v].key, d / 100 * (C[v -
+					1] && C[v - 1].key || 0), C[v - 1] && C[v - 1].value.callback);
 				D = C[C[w] - 1].value.callback;
-				D && h.timeouts.push(setTimeout(function () {
+				D && h.timeouts.push(setTimeout(function() {
 					D.call(h)
 				}, d))
 			}
 			return this
 		};
-		bO.stop = function () {
+		bO.stop = function() {
 			for (var a = 0; a < cv.length; a++) cv[a].el.id == this.id && cv.splice(a--, 1);
-			for (a = 0, ii = this.timeouts && this.timeouts.length; a < ii; a++) clearTimeout(this.timeouts[a]);
+			for (a = 0, ii = this.timeouts && this.timeouts.length; a < ii; a++) clearTimeout(this
+				.timeouts[a]);
 			this.timeouts = [];
 			clearTimeout(this._ac);
 			delete this._ac;
 			return this
 		};
-		bO.translate = function (a, b) {
+		bO.translate = function(a, b) {
 			return this.attr({
 				translation: a + " " + b
 			})
 		};
-		bO[H] = function () {
+		bO[H] = function() {
 			return "Raphaël’s object"
 		};
 		a.ae = cv;
-		var cC = function (a) {
+		var cC = function(a) {
 			this.items = [];
 			this[w] = 0;
 			this.type = "set";
@@ -6114,7 +6086,7 @@ define("scripts/lib/raphael.js", function (exports) {
 					}
 				}
 		};
-		cC[e][L] = function () {
+		cC[e][L] = function() {
 			var a, b;
 			for (var c = 0, d = arguments[w]; c < d; c++) {
 				a = arguments[c];
@@ -6126,43 +6098,45 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 			return this
 		};
-		cC[e].pop = function () {
+		cC[e].pop = function() {
 			delete this[this[w]--];
 			return this.items.pop()
 		};
-		for (var cD in bO) bO[f](cD) && (cC[e][cD] = (function (a) {
-			return function () {
-				for (var b = 0, c = this.items[w]; b < c; b++) this.items[b][a][m](this.items[b], arguments);
+		for (var cD in bO) bO[f](cD) && (cC[e][cD] = (function(a) {
+			return function() {
+				for (var b = 0, c = this.items[w]; b < c; b++) this.items[b][a][m](this
+					.items[b], arguments);
 				return this
 			}
 		})(cD));
-		cC[e].attr = function (b, c) {
+		cC[e].attr = function(b, c) {
 			if (b && a.is(b, G) && a.is(b[0], "object"))
 				for (var d = 0, e = b[w]; d < e; d++) this.items[d].attr(b[d]);
 			else
 				for (var f = 0, g = this.items[w]; f < g; f++) this.items[f].attr(b, c);
 			return this
 		};
-		cC[e].animate = function (b, c, d, e) {
+		cC[e].animate = function(b, c, d, e) {
 			(a.is(d, "function") || !d) && (e = d || null);
 			var f = this.items[w],
 				g = f,
 				h, i = this,
 				j;
-			e && (j = function () {
+			e && (j = function() {
 				!(--f) && e.call(i)
 			});
 			d = a.is(d, F) ? d : j;
 			h = this.items[--g].animate(b, c, d, j);
-			while (g--) this.items[g] && !this.items[g].removed && this.items[g].animateWith(h, b, c, d, j);
+			while (g--) this.items[g] && !this.items[g].removed && this.items[g].animateWith(h, b, c, d,
+				j);
 			return this
 		};
-		cC[e].insertAfter = function (a) {
+		cC[e].insertAfter = function(a) {
 			var b = this.items[w];
 			while (b--) this.items[b].insertAfter(a);
 			return this
 		};
-		cC[e].getBBox = function () {
+		cC[e].getBBox = function() {
 			var a = [],
 				b = [],
 				c = [],
@@ -6183,12 +6157,12 @@ define("scripts/lib/raphael.js", function (exports) {
 				height: z[m](0, d) - b
 			}
 		};
-		cC[e].clone = function (a) {
+		cC[e].clone = function(a) {
 			a = new cC;
 			for (var b = 0, c = this.items[w]; b < c; b++) a[L](this.items[b].clone());
 			return a
 		};
-		a.registerFont = function (a) {
+		a.registerFont = function(a) {
 			if (!a.face) return a;
 			this.fonts = this.fonts || {};
 			var b = {
@@ -6207,7 +6181,7 @@ define("scripts/lib/raphael.js", function (exports) {
 						b.glyphs[e] = {
 							w: g.w,
 							k: {},
-							d: g.d && "M" + g.d[Y](/[mlcxtrv]/g, function (a) {
+							d: g.d && "M" + g.d[Y](/[mlcxtrv]/g, function(a) {
 								return ({
 									l: "L",
 									c: "C",
@@ -6224,7 +6198,7 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 			return a
 		};
-		k.getFont = function (b, c, d, e) {
+		k.getFont = function(b, c, d, e) {
 			e = e || "normal";
 			d = d || "normal";
 			c = +c || ({
@@ -6249,11 +6223,12 @@ define("scripts/lib/raphael.js", function (exports) {
 			if (g)
 				for (var k = 0, l = g[w]; k < l; k++) {
 					j = g[k];
-					if (j.face["font-weight"] == c && (j.face["font-style"] == d || !j.face["font-style"]) && j.face["font-stretch"] == e) break
+					if (j.face["font-weight"] == c && (j.face["font-style"] == d || !j.face[
+							"font-style"]) && j.face["font-stretch"] == e) break
 				}
 			return j
 		};
-		k.print = function (c, d, e, f, g, h, i) {
+		k.print = function(c, d, e, f, g, h, i) {
 			h = h || "middle";
 			i = z(A(i || 0, 1), -1);
 			var j = this.set(),
@@ -6281,14 +6256,14 @@ define("scripts/lib/raphael.js", function (exports) {
 			}
 			return j
 		};
-		a.format = function (b, c) {
+		a.format = function(b, c) {
 			var e = a.is(c, G) ? [0][n](c) : arguments;
-			b && a.is(b, F) && e[w] - 1 && (b = b[Y](d, function (a, b) {
+			b && a.is(b, F) && e[w] - 1 && (b = b[Y](d, function(a, b) {
 				return e[++b] == null ? p : e[b]
 			}));
 			return b || p
 		};
-		a.ninja = function () {
+		a.ninja = function() {
 			i.was ? h.Raphael = i.is : delete Raphael;
 			return a
 		};
@@ -6305,7 +6280,7 @@ define("scripts/lib/raphael.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\lib\sound.js
  */
-define("scripts/lib/sound.js", function (exports) {
+define("scripts/lib/sound.js", function(exports) {
 	/**
 	 * 简易声效控制
 	 */
@@ -6330,19 +6305,19 @@ define("scripts/lib/sound.js", function (exports) {
 		});
 	}
 
-	ClassBuzz.prototype.play = function () {
+	ClassBuzz.prototype.play = function() {
 		this.sound.setPercent(0);
 		this.sound.setVolume(100);
 		this.sound.play();
 	};
 
-	ClassBuzz.prototype.stop = function () {
-		this.sound.fadeOut(1e3, function () {
+	ClassBuzz.prototype.stop = function() {
+		this.sound.fadeOut(1e3, function() {
 			this.pause();
 		});
 	};
 
-	exports.create = function (src) {
+	exports.create = function(src) {
 		return new ClassBuzz(src);
 	};
 
@@ -6353,48 +6328,51 @@ define("scripts/lib/sound.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\lib\tween.js
  */
-define("scripts/lib/tween.js", function (exports) {
-	exports.exponential = function () {};
-	exports.exponential.co = function (index, offset, target, framesNum) {
-		return (index == framesNum) ? offset + target : target * (-Math.pow(2, -10 * index / framesNum) + 1) + offset;
+define("scripts/lib/tween.js", function(exports) {
+	exports.exponential = function() {};
+	exports.exponential.co = function(index, offset, target, framesNum) {
+		return (index == framesNum) ? offset + target : target * (-Math.pow(2, -10 * index / framesNum) +
+			1) + offset;
 	};
 	// exports.exponential.ci = function(index, offset, target, framesNum){ return (index == 0) ? offset : target * Math.pow(2, 10 * (index / framesNum - 1)) + offset; }
 
-	exports.bounce = function () {};
-	exports.bounce.co = function (index, offset, target, framesNum) {
+	exports.bounce = function() {};
+	exports.bounce.co = function(index, offset, target, framesNum) {
 		if ((index /= framesNum) < (1 / 2.75)) return target * (7.5625 * index * index) + offset;
-		else if (index < (2 / 2.75)) return target * (7.5625 * (index -= (1.5 / 2.75)) * index + .75) + offset;
-		else if (index < (2.5 / 2.75)) return target * (7.5625 * (index -= (2.25 / 2.75)) * index + .9375) + offset;
+		else if (index < (2 / 2.75)) return target * (7.5625 * (index -= (1.5 / 2.75)) * index + .75) +
+			offset;
+		else if (index < (2.5 / 2.75)) return target * (7.5625 * (index -= (2.25 / 2.75)) * index + .9375) +
+			offset;
 		else return target * (7.5625 * (index -= (2.625 / 2.75)) * index + .984375) + offset;
 	};
 
-	exports.quadratic = function () {};
-	exports.quadratic.ci = function (index, offset, target, framesNum) {
+	exports.quadratic = function() {};
+	exports.quadratic.ci = function(index, offset, target, framesNum) {
 		return target * (index /= framesNum) * index + offset;
 	};
-	exports.quadratic.co = function (index, offset, target, framesNum) {
+	exports.quadratic.co = function(index, offset, target, framesNum) {
 		return -target * (index /= framesNum) * (index - 2) + offset;
 	}
-	exports.quadratic.cio = function (index, offset, target, framesNum) {
+	exports.quadratic.cio = function(index, offset, target, framesNum) {
 		if ((index /= framesNum / 2) < 1) return target / 2 * index * index + offset;
 		else return -target / 2 * ((--index) * (index - 2) - 1) + offset;
 	};
 
-	exports.circular = function (index, offset, target, framesNum) {
+	exports.circular = function(index, offset, target, framesNum) {
 		if ((index /= framesNum / 2) < 1) return -target / 2 * (Math.sqrt(1 - index * index) - 1) + offset;
 		else return target / 2 * (Math.sqrt(1 - (index -= 2) * index) + 1) + offset;
 	}
 
-	exports.linear = function (index, offset, target, framesNum) {
+	exports.linear = function(index, offset, target, framesNum) {
 		return target * index / framesNum + offset;
 	};
 
-	exports.back = function () {};
-	exports.back.ci = function (index, offset, target, framesNum, s) {
+	exports.back = function() {};
+	exports.back.ci = function(index, offset, target, framesNum, s) {
 		s = 1.70158;
 		return target * (index /= framesNum) * index * ((s + 1) * index - s) + offset;
 	};
-	exports.back.co = function (index, offset, target, framesNum, s) {
+	exports.back.co = function(index, offset, target, framesNum, s) {
 		s = 1.70158;
 		return target * ((index = index / framesNum - 1) * index * ((s + 1) * index + s) + 1) + offset;
 	};;
@@ -6406,7 +6384,7 @@ define("scripts/lib/tween.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\lib\ucren.js
  */
-define("scripts/lib/ucren.js", function (exports) {
+define("scripts/lib/ucren.js", function(exports) {
 	/**
 	 * ucren-lite
 	 * filename: boot.js
@@ -6428,15 +6406,15 @@ define("scripts/lib/ucren.js", function (exports) {
 
 	// String.prototype.trim
 	if (!String.prototype.trim)
-		String.prototype.trim = function () {
+		String.prototype.trim = function() {
 			return this.replace(/^\s+|\s+$/, "");
 		};
 
 	// String.prototype.format
-	String.prototype.format = function (conf) {
+	String.prototype.format = function(conf) {
 		var rtn = this,
 			blank = {};
-		Ucren.each(conf, function (item, key) {
+		Ucren.each(conf, function(item, key) {
 			item = item.toString().replace(/\$/g, "$$$$");
 			rtn = rtn.replace(RegExp("@{" + key + "}", "g"), item);
 		});
@@ -6444,9 +6422,9 @@ define("scripts/lib/ucren.js", function (exports) {
 	};
 
 	// String.prototype.htmlEncode
-	String.prototype.htmlEncode = function () {
+	String.prototype.htmlEncode = function() {
 		var div = document.createElement("div");
-		return function () {
+		return function() {
 			var text;
 			div.appendChild(document.createTextNode(this));
 			text = div.innerHTML;
@@ -6456,12 +6434,12 @@ define("scripts/lib/ucren.js", function (exports) {
 	}();
 
 	// String.prototype.byteLength
-	String.prototype.byteLength = function () {
+	String.prototype.byteLength = function() {
 		return this.replace(/[^\x00-\xff]/g, "  ").length;
 	};
 
 	// String.prototype.subByte
-	String.prototype.subByte = function (len, tail) {
+	String.prototype.subByte = function(len, tail) {
 		var s = this;
 		if (s.byteLength() <= len)
 			return s;
@@ -6474,9 +6452,9 @@ define("scripts/lib/ucren.js", function (exports) {
 	}
 
 	// Function.prototype.defer
-	Function.prototype.defer = function (scope, timeout) {
+	Function.prototype.defer = function(scope, timeout) {
 		var me = this;
-		var fn = function () {
+		var fn = function() {
 			me.apply(scope, arguments);
 		};
 		return setTimeout(fn, timeout);
@@ -6485,25 +6463,25 @@ define("scripts/lib/ucren.js", function (exports) {
 
 	// Function.prototype.bind
 	if (!Function.prototype.bind)
-		Function.prototype.bind = function (scope) {
+		Function.prototype.bind = function(scope) {
 			var me = this;
-			return function () {
+			return function() {
 				return me.apply(scope, arguments);
 			}
 		};
 
 	// Function.prototype.saturate
-	Function.prototype.saturate = function (scope /*, args */ ) {
+	Function.prototype.saturate = function(scope /*, args */ ) {
 		var fn = this,
 			afters = slice.call(arguments, 1);
-		return function () {
+		return function() {
 			return fn.apply(scope, slice.call(arguments, 0).concat(afters));
 		}
 	};
 
 	// Array.prototype.indexOf
 	// if(!Array.prototype.indexOf)
-	Array.prototype.indexOf = function (item, i) {
+	Array.prototype.indexOf = function(item, i) {
 		var length = this.length;
 
 		if (!i)
@@ -6519,7 +6497,7 @@ define("scripts/lib/ucren.js", function (exports) {
 
 	// Array.prototype.every
 	// if(!Array.prototype.every)
-	Array.prototype.every = function (fn, context) {
+	Array.prototype.every = function(fn, context) {
 		for (var i = 0, len = this.length; i < len; i++)
 			if (!fn.call(context, this[i], i, this))
 				return false;
@@ -6528,7 +6506,7 @@ define("scripts/lib/ucren.js", function (exports) {
 
 	// Array.prototype.filter
 	// if(!Array.prototype.filter)
-	Array.prototype.filter = function (fn, context) {
+	Array.prototype.filter = function(fn, context) {
 		var result = [],
 			val;
 		for (var i = 0, len = this.length; i < len; i++)
@@ -6539,14 +6517,14 @@ define("scripts/lib/ucren.js", function (exports) {
 
 	// Array.prototype.forEach
 	// if(!Array.prototype.forEach)
-	Array.prototype.forEach = function (fn, context) {
+	Array.prototype.forEach = function(fn, context) {
 		for (var i = 0, len = this.length; i < len; i++)
 			fn.call(context, this[i], i, this);
 	};
 
 	// Array.prototype.map
 	// if(!Array.prototype.map)
-	Array.prototype.map = function (fn, context) {
+	Array.prototype.map = function(fn, context) {
 		var result = [];
 		for (var i = 0, len = this.length; i < len; i++)
 			result[i] = fn.call(context, this[i], i, this);
@@ -6555,16 +6533,16 @@ define("scripts/lib/ucren.js", function (exports) {
 
 	// Array.prototype.some
 	// if(!Array.prototype.some)
-	Array.prototype.some = function (fn, context) {
+	Array.prototype.some = function(fn, context) {
 		for (var i = 0, len = this.length; i < len; i++)
 			if (fn.call(context, this[i], i, this))
 				return true;
 		return false;
 	};
 
-	Array.prototype.invoke = function (method /*, args */ ) {
+	Array.prototype.invoke = function(method /*, args */ ) {
 		var args = slice.call(arguments, 1);
-		this.forEach(function (item) {
+		this.forEach(function(item) {
 			if (item instanceof Array)
 				item[0][method].apply(item[0], item.slice(1));
 			else
@@ -6573,7 +6551,7 @@ define("scripts/lib/ucren.js", function (exports) {
 		return this;
 	};
 
-	Array.prototype.random = function () {
+	Array.prototype.random = function() {
 		var arr = this.slice(0),
 			ret = [],
 			i = arr.length;
@@ -6617,16 +6595,16 @@ define("scripts/lib/ucren.js", function (exports) {
 		//
 
 		// Ucren.apply
-		apply: function (form, to, except) {
+		apply: function(form, to, except) {
 			if (!to) to = {};
 			if (except) {
-				Ucren.each(form, function (item, key) {
+				Ucren.each(form, function(item, key) {
 					if (key in except)
 						return;
 					to[key] = item;
 				});
 			} else {
-				Ucren.each(form, function (item, key) {
+				Ucren.each(form, function(item, key) {
 					to[key] = item;
 				});
 			}
@@ -6634,7 +6612,7 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.appendStyle
-		appendStyle: function (text) {
+		appendStyle: function(text) {
 			var style;
 
 			if (arguments.length > 1)
@@ -6668,8 +6646,8 @@ define("scripts/lib/ucren.js", function (exports) {
 		// }
 
 		// Ucren.addEvent
-		addEvent: function (target, name, fn) {
-			var call = function () {
+		addEvent: function(target, name, fn) {
+			var call = function() {
 				fn.apply(target, arguments);
 			};
 			if (target.dom) {
@@ -6686,7 +6664,7 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.delEvent
-		delEvent: function (target, name, fn) {
+		delEvent: function(target, name, fn) {
 			if (window.detachEvent) {
 				target.detachEvent("on" + name, fn);
 			} else if (window.removeEventListener) {
@@ -6697,21 +6675,21 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.Class
-		Class: function (initialize, methods, befores, afters) {
+		Class: function(initialize, methods, befores, afters) {
 			var fn, prototype, blank;
-			initialize = initialize || function () {};
+			initialize = initialize || function() {};
 			methods = methods || {};
 			blank = {};
-			fn = function () {
+			fn = function() {
 				this.instanceId = Ucren.id();
 				initialize.apply(this, arguments);
 			};
 			prototype = fn.prototype;
 			Ucren.registerClassEvent.call(prototype);
-			Ucren.each(methods, function (item, key) {
-				prototype[key] = function (method, name) {
-					if (typeof (method) == "function") {
-						return function () {
+			Ucren.each(methods, function(item, key) {
+				prototype[key] = function(method, name) {
+					if (typeof(method) == "function") {
+						return function() {
 							var args, rtn;
 							args = slice.call(arguments, 0);
 							if (befores &&
@@ -6730,52 +6708,52 @@ define("scripts/lib/ucren.js", function (exports) {
 					}
 				}(item, key);
 			});
-			prototype.getOriginMethod = function (name) {
+			prototype.getOriginMethod = function(name) {
 				return methods[name];
 			};
 			return fn;
 		},
 
 		//private
-		registerClassEvent: function () {
-			this.on = function (name, fn) {
+		registerClassEvent: function() {
+			this.on = function(name, fn) {
 				var instanceId = this.instanceId;
 				Ucren.dispatch(instanceId + name, fn.bind(this));
 			};
-			this.onbefore = function (name, fn) {
+			this.onbefore = function(name, fn) {
 				var instanceId = this.instanceId;
 				Ucren.dispatch(instanceId + "before" + name, fn.bind(this));
 			};
-			this.un = function (name, fn) {
+			this.un = function(name, fn) {
 				//todo
 			};
-			this.fireEvent = function (name, args) {
+			this.fireEvent = function(name, args) {
 				var instanceId = this.instanceId;
 				Ucren.dispatch(instanceId + name, args);
 			};
 		},
 
 		// Ucren.createFuze
-		createFuze: function () {
+		createFuze: function() {
 			var queue, fn, infire;
 			queue = [];
-			fn = function (process) {
+			fn = function(process) {
 				if (infire) {
 					process();
 				} else {
 					queue.push(process);
 				}
 			};
-			fn.fire = function () {
+			fn.fire = function() {
 				while (queue.length) {
 					queue.shift()();
 				}
 				infire = true;
 			};
-			fn.extinguish = function () {
+			fn.extinguish = function() {
 				infire = false;
 			};
-			fn.wettish = function () {
+			fn.wettish = function() {
 				if (queue.length) {
 					queue.shift()();
 				}
@@ -6800,37 +6778,37 @@ define("scripts/lib/ucren.js", function (exports) {
 		// },
 
 		// Ucren.dispatch
-		dispatch: function () {
+		dispatch: function() {
 			var map = {},
 				send, incept;
 
-			send = function (processId, args, scope) {
+			send = function(processId, args, scope) {
 				var processItems;
 				if (processItems = map[processId])
-					Ucren.each(processItems, function (item) {
+					Ucren.each(processItems, function(item) {
 						item.apply(scope, args);
 					});
 			};
 
-			incept = function (processId, fn) {
+			incept = function(processId, fn) {
 				if (!map[processId])
 					map[processId] = [];
 				map[processId].push(fn);
 			};
 
-			return function (arg1, arg2, arg3) {
-				if (typeof (arg2) === "undefined")
+			return function(arg1, arg2, arg3) {
+				if (typeof(arg2) === "undefined")
 					arg2 = [];
 
 				if (arg2 instanceof Array)
 					send.apply(this, arguments);
-				else if (typeof (arg2) === "function")
+				else if (typeof(arg2) === "function")
 					incept.apply(this, arguments);
 			}
 		}(),
 
 		// Ucren.each (not recommended)
-		each: function (unknown, fn) {
+		each: function(unknown, fn) {
 			/// unknown 是 array 的，会慢慢退化，建议用 Array.prototype.forEach 替代
 			/// unknown 为其它类似的，短期内将暂时支持
 			if (unknown instanceof Array || (typeof unknown == "object" &&
@@ -6843,7 +6821,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				//					}
 				//				}
 				unknown.forEach(fn);
-			} else if (typeof (unknown) == "object") {
+			} else if (typeof(unknown) == "object") {
 				var blank = {};
 				for (var i in unknown) {
 					if (blank[i]) {
@@ -6853,13 +6831,13 @@ define("scripts/lib/ucren.js", function (exports) {
 						break;
 					}
 				}
-			} else if (typeof (unknown) == "number") {
+			} else if (typeof(unknown) == "number") {
 				for (var i = 0; i < unknown; i++) {
 					if (fn(i, i) === false) {
 						break;
 					}
 				}
-			} else if (typeof (unknown) == "string") {
+			} else if (typeof(unknown) == "string") {
 				for (var i = 0, l = unknown.length; i < l; i++) {
 					if (fn(unknown.charAt(i), i) === false) {
 						break;
@@ -6869,12 +6847,12 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.Element
-		Element: function (el, returnDom) {
+		Element: function(el, returnDom) {
 			var rtn, handleId;
 			if (el && el.isUcrenElement) {
 				return returnDom ? el.dom : el;
 			}
-			el = typeof (el) == "string" ? document.getElementById(el) : el;
+			el = typeof(el) == "string" ? document.getElementById(el) : el;
 
 			if (!el)
 				return null;
@@ -6894,14 +6872,14 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.Event
-		Event: function (e) {
+		Event: function(e) {
 			e = e || window.event;
 
 			if (!e) {
 				var c = arguments.callee.caller;
 				while (c) {
 					e = c.arguments[0];
-					if (e && typeof (e.altKey) == "boolean") { // duck typing
+					if (e && typeof(e.altKey) == "boolean") { // duck typing
 						break;
 					}
 					c = c.caller;
@@ -6913,17 +6891,17 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.fixNumber
-		fixNumber: function (unknown, defaultValue) {
-			return typeof (unknown) == "number" ? unknown : defaultValue;
+		fixNumber: function(unknown, defaultValue) {
+			return typeof(unknown) == "number" ? unknown : defaultValue;
 		},
 
 		// Ucren.fixString
-		fixString: function (unknown, defaultValue) {
-			return typeof (unknown) == "string" ? unknown : defaultValue;
+		fixString: function(unknown, defaultValue) {
+			return typeof(unknown) == "string" ? unknown : defaultValue;
 		},
 
 		// Ucren.fixConfig
-		fixConfig: function (conf) {
+		fixConfig: function(conf) {
 			var defaultConf;
 			defaultConf = {};
 			if (typeof conf == "undefined") {
@@ -6936,16 +6914,16 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.handle
-		handle: function (unknown) {
+		handle: function(unknown) {
 			var fn, type, number;
 			fn = arguments.callee;
 			if (!fn.cache) {
 				fn.cache = {};
 			}
-			if (typeof (fn.number) == "undefined") {
+			if (typeof(fn.number) == "undefined") {
 				fn.number = 0;
 			}
-			type = typeof (unknown);
+			type = typeof(unknown);
 			if (type == "number") {
 				return fn.cache[unknown.toString()];
 			} else if (type == "object" || type == "function") {
@@ -6956,23 +6934,23 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.id
-		id: function () {
+		id: function() {
 			var id = arguments.callee;
 			id.number = ++id.number || 0;
 			return "_" + id.number;
 		},
 
 		// Ucren.loadImage
-		loadImage: function (urls, onLoadComplete) {
+		loadImage: function(urls, onLoadComplete) {
 			var length = urls.length;
 			var loaded = 0;
-			var check = function () {
+			var check = function() {
 				if (loaded == length)
 					onLoadComplete && onLoadComplete();
 			};
-			Ucren.each(urls, function (url) {
+			Ucren.each(urls, function(url) {
 				var img = document.createElement("img");
-				img.onload = img.onerror = function () {
+				img.onload = img.onerror = function() {
 					this.onload = this.onerror = null;
 					loaded++;
 					check();
@@ -6983,17 +6961,17 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.loadScript
-		loadScript: function (src, callback) {
-			Ucren.request(src, function (text) {
+		loadScript: function(src, callback) {
+			Ucren.request(src, function(text) {
 				eval(text);
 				callback && callback(text);
 			});
 		},
 
 		// Ucren.makeElement
-		makeElement: function (tagName, attributes) {
+		makeElement: function(tagName, attributes) {
 			var el = document.createElement(tagName);
-			var setStyle = function (unknown) {
+			var setStyle = function(unknown) {
 				if (typeof unknown == "string")
 					el.style.cssText = unknown;
 				else
@@ -7015,7 +6993,7 @@ define("scripts/lib/ucren.js", function (exports) {
 		},
 
 		// Ucren.nul
-		nul: function () {
+		nul: function() {
 			return false;
 		},
 
@@ -7029,17 +7007,17 @@ define("scripts/lib/ucren.js", function (exports) {
 		// },
 
 		// Ucren.randomNumber
-		randomNumber: function (num) {
+		randomNumber: function(num) {
 			return Math.floor(Math.random() * num);
 		},
 
 		// Ucren.randomWord
-		randomWord: function () {
+		randomWord: function() {
 			var cw = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-			return function (length, sourceString) {
+			return function(length, sourceString) {
 				var words, re = [];
 				words = sourceString || cw;
-				Ucren.each(length, function (index) {
+				Ucren.each(length, function(index) {
 					re[index] = words.charAt(this.randomNumber(words.length));
 				}.bind(this));
 				return re.join("");
@@ -7047,7 +7025,7 @@ define("scripts/lib/ucren.js", function (exports) {
 		}(),
 
 		// Ucren.request
-		request: function (url, callback) {
+		request: function(url, callback) {
 			request = Ucren.request;
 			var xhr = request.xhr;
 			if (!request.xhr) {
@@ -7058,7 +7036,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				}
 			}
 			xhr.open("GET", url, true);
-			xhr.onreadystatechange = function () {
+			xhr.onreadystatechange = function() {
 				if (xhr.readyState == 4 && xhr.status == 200) {
 					callback(xhr.responseText);
 				}
@@ -7104,7 +7082,7 @@ define("scripts/lib/ucren.js", function (exports) {
 	// Ucren.BasicDrag
 	Ucren.BasicDrag = Ucren.Class(
 		/* constructor */
-		function (conf) {
+		function(conf) {
 			conf = Ucren.fixConfig(conf);
 			this.type = Ucren.fixString(conf.type, "normal");
 
@@ -7117,13 +7095,13 @@ define("scripts/lib/ucren.js", function (exports) {
 
 		/* methods */
 		{
-			bind: function (el, handle) {
+			bind: function(el, handle) {
 				el = Ucren.Element(el);
 				handle = Ucren.Element(handle) || el;
 
 				var evt = {};
 
-				evt[this.TOUCH_START] = function (e) {
+				evt[this.TOUCH_START] = function(e) {
 					e = Ucren.Event(e);
 					this.startDrag();
 					e.cancelBubble = true;
@@ -7136,7 +7114,7 @@ define("scripts/lib/ucren.js", function (exports) {
 			},
 
 			//private
-			getCoors: function (e) {
+			getCoors: function(e) {
 				var coors = [];
 				if (e.targetTouches && e.targetTouches.length) { // iPhone
 					var thisTouch = e.targetTouches[0];
@@ -7150,7 +7128,7 @@ define("scripts/lib/ucren.js", function (exports) {
 			},
 
 			//private
-			startDrag: function () {
+			startDrag: function() {
 				var target, draging, e;
 				target = this.target;
 				draging = target.draging = {};
@@ -7169,19 +7147,19 @@ define("scripts/lib/ucren.js", function (exports) {
 			},
 
 			//private
-			endDrag: function () {
+			endDrag: function() {
 				this.isDraging = false;
 				this.unRegisterDocumentEvent();
 			},
 
 			//private
-			registerDocumentEvent: function () {
+			registerDocumentEvent: function() {
 				var target, draging;
 				target = this.target;
 				draging = target.draging;
 
 				draging.documentSelectStart =
-					Ucren.addEvent(document, "selectstart", function (e) {
+					Ucren.addEvent(document, "selectstart", function(e) {
 						e = e || event;
 						e.stopPropagation && e.stopPropagation();
 						e.cancelBubble = true;
@@ -7189,7 +7167,7 @@ define("scripts/lib/ucren.js", function (exports) {
 					});
 
 				draging.documentMouseMove =
-					Ucren.addEvent(document, this.TOUCH_MOVE, function (e) {
+					Ucren.addEvent(document, this.TOUCH_MOVE, function(e) {
 						var ie, nie;
 						e = e || event;
 						ie = Ucren.isIe && e.button != 1;
@@ -7204,12 +7182,12 @@ define("scripts/lib/ucren.js", function (exports) {
 					}.bind(this));
 
 				draging.documentMouseUp =
-					Ucren.addEvent(document, this.TOUCH_END, function () {
+					Ucren.addEvent(document, this.TOUCH_END, function() {
 						this.endDrag();
 					}.bind(this));
 
 				clearInterval(draging.timer);
-				draging.timer = setInterval(function () {
+				draging.timer = setInterval(function() {
 					var x, y, dx, dy;
 					if (draging.newMouseX) {
 						dx = draging.newMouseX - draging.mouseX;
@@ -7226,7 +7204,7 @@ define("scripts/lib/ucren.js", function (exports) {
 			},
 
 			//private
-			unRegisterDocumentEvent: function () {
+			unRegisterDocumentEvent: function() {
 				var draging = this.target.draging;
 				Ucren.delEvent(document, this.TOUCH_MOVE, draging.documentMouseMove);
 				Ucren.delEvent(document, this.TOUCH_END, draging.documentMouseUp);
@@ -7235,7 +7213,7 @@ define("scripts/lib/ucren.js", function (exports) {
 			},
 
 			//private
-			returnValue: function (dx, dy, x, y) {
+			returnValue: function(dx, dy, x, y) {
 				//todo something
 			}
 		}
@@ -7244,13 +7222,13 @@ define("scripts/lib/ucren.js", function (exports) {
 	// Ucren.Template
 	Ucren.Template = Ucren.Class(
 		/* constructor */
-		function () {
+		function() {
 			this.string = join.call(arguments, "");
 		},
 
 		/* methods */
 		{
-			apply: function (conf) {
+			apply: function(conf) {
 				return this.string.format(conf);
 			}
 		}
@@ -7259,7 +7237,7 @@ define("scripts/lib/ucren.js", function (exports) {
 	// Ucren.BasicElement
 	Ucren.BasicElement = Ucren.Class(
 		/* constructor */
-		function (el) {
+		function(el) {
 			this.dom = el;
 			this.countMapping = {};
 		},
@@ -7268,7 +7246,7 @@ define("scripts/lib/ucren.js", function (exports) {
 		{
 			isUcrenElement: true,
 
-			attr: function (name, value) {
+			attr: function(name, value) {
 				if (typeof value == "string") {
 					this.dom.setAttribute(name, value);
 				} else {
@@ -7277,21 +7255,21 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			style: function ( /* unknown1, unknown2 */ ) {
+			style: function( /* unknown1, unknown2 */ ) {
 				var getStyle = Ucren.isIe ?
-					function (name) {
+					function(name) {
 						return this.dom.currentStyle[name];
 					} :
 
-					function (name) {
+					function(name) {
 						var style;
 						style = document.defaultView.getComputedStyle(this.dom, null);
 						return style.getPropertyValue(name);
 					};
 
-				return function (unknown1, unknown2) {
+				return function(unknown1, unknown2) {
 					if (typeof unknown1 == "object") {
-						Ucren.each(unknown1, function (value, key) {
+						Ucren.each(unknown1, function(value, key) {
 							this[key] = value;
 						}.bind(this.dom.style));
 					} else if (typeof unknown1 == "string" && typeof unknown2 == "undefined") {
@@ -7303,18 +7281,18 @@ define("scripts/lib/ucren.js", function (exports) {
 				};
 			}(),
 
-			hasClass: function (name) {
+			hasClass: function(name) {
 				var className = " " + this.dom.className + " ";
 				return className.indexOf(" " + name + " ") > -1;
 			},
 
-			setClass: function (name) {
-				if (typeof (name) == "string")
+			setClass: function(name) {
+				if (typeof(name) == "string")
 					this.dom.className = name.trim();
 				return this;
 			},
 
-			addClass: function (name) {
+			addClass: function(name) {
 				var el, className;
 				el = this.dom;
 				className = " " + el.className + " ";
@@ -7327,7 +7305,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			delClass: function (name) {
+			delClass: function(name) {
 				var el, className;
 				el = this.dom;
 				className = " " + el.className + " ";
@@ -7340,7 +7318,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			html: function (html) {
+			html: function(html) {
 				var el = this.dom;
 
 				if (typeof html == "string") {
@@ -7353,9 +7331,9 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			left: function (number) {
+			left: function(number) {
 				var el = this.dom;
-				if (typeof (number) == "number") {
+				if (typeof(number) == "number") {
 					el.style.left = number + "px";
 					this.fireEvent("infect", [{
 						left: number
@@ -7366,9 +7344,9 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			top: function (number) {
+			top: function(number) {
 				var el = this.dom;
-				if (typeof (number) == "number") {
+				if (typeof(number) == "number") {
 					el.style.top = number + "px";
 					this.fireEvent("infect", [{
 						top: number
@@ -7379,7 +7357,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			width: function (unknown) {
+			width: function(unknown) {
 				var el = this.dom;
 				if (typeof unknown == "number") {
 					el.style.width = unknown + "px";
@@ -7397,7 +7375,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			height: function (unknown) {
+			height: function(unknown) {
 				var el = this.dom;
 				if (typeof unknown == "number") {
 					el.style.height = unknown + "px";
@@ -7415,13 +7393,13 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			count: function (name) {
+			count: function(name) {
 				return this.countMapping[name] = ++this.countMapping[name] || 1;
 			},
 
-			display: function (bool) {
+			display: function(bool) {
 				var dom = this.dom;
-				if (typeof (bool) == "boolean") {
+				if (typeof(bool) == "boolean") {
 					dom.style.display = bool ? "block" : "none";
 					this.fireEvent("infect", [{
 						display: bool
@@ -7432,7 +7410,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			first: function () {
+			first: function() {
 				var c = this.dom.firstChild;
 				while (c && !c.tagName && c.nextSibling) {
 					c = c.nextSibling;
@@ -7440,14 +7418,14 @@ define("scripts/lib/ucren.js", function (exports) {
 				return c;
 			},
 
-			add: function (dom) {
+			add: function(dom) {
 				var el;
 				el = Ucren.Element(dom);
 				this.dom.appendChild(el.dom);
 				return this;
 			},
 
-			remove: function (dom) {
+			remove: function(dom) {
 				var el;
 				if (dom) {
 					el = Ucren.Element(dom);
@@ -7460,7 +7438,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			insert: function (dom) {
+			insert: function(dom) {
 				var tdom;
 				tdom = this.dom;
 				if (tdom.firstChild) {
@@ -7471,28 +7449,28 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			addEvents: function (conf) {
+			addEvents: function(conf) {
 				var blank, el, rtn;
 				blank = {};
 				rtn = {};
 				el = this.dom;
-				Ucren.each(conf, function (item, key) {
+				Ucren.each(conf, function(item, key) {
 					rtn[key] = Ucren.addEvent(el, key, item);
 				});
 				return rtn;
 			},
 
-			removeEvents: function (conf) {
+			removeEvents: function(conf) {
 				var blank, el;
 				blank = {};
 				el = this.dom;
-				Ucren.each(conf, function (item, key) {
+				Ucren.each(conf, function(item, key) {
 					Ucren.delEvent(el, key, item);
 				});
 				return this;
 			},
 
-			getPos: function () {
+			getPos: function() {
 				var el, parentNode, pos, box, offset;
 				el = this.dom;
 				pos = {};
@@ -7522,7 +7500,8 @@ define("scripts/lib/ucren.js", function (exports) {
 							parentNode = parentNode.offsetParent;
 						}
 					}
-					if (Ucren.isSafari && this.style("position") == "absolute") { // safari doubles in some cases
+					if (Ucren.isSafari && this.style("position") ==
+						"absolute") { // safari doubles in some cases
 						pos.x -= document.body.offsetLeft;
 						pos.y -= document.body.offsetTop;
 					}
@@ -7548,7 +7527,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				return pos;
 			},
 
-			getSize: function () {
+			getSize: function() {
 				var dom = this.dom;
 				var display = this.style("display");
 
@@ -7586,13 +7565,13 @@ define("scripts/lib/ucren.js", function (exports) {
 				return dimensions;
 			},
 
-			observe: function (el, fn) {
+			observe: function(el, fn) {
 				el = Ucren.Element(el);
 				el.on("infect", fn.bind(this));
 				return this;
 			},
 
-			usePNGbackground: function (image) {
+			usePNGbackground: function(image) {
 				var dom;
 				dom = this.dom;
 				if (/\.png$/i.test(image) && Ucren.isIe6) {
@@ -7607,9 +7586,9 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			setAlpha: function () {
+			setAlpha: function() {
 				var reOpacity = /alpha\s*\(\s*opacity\s*=\s*([^\)]+)\)/;
-				return function (value) {
+				return function(value) {
 					var element = this.dom,
 						es = element.style;
 					if (!Ucren.isIe) {
@@ -7630,12 +7609,12 @@ define("scripts/lib/ucren.js", function (exports) {
 				};
 			}(),
 
-			fadeIn: function (callback) {
+			fadeIn: function(callback) {
 				if (typeof this.fadingNumber == "undefined")
 					this.fadingNumber = 0;
 				this.setAlpha(this.fadingNumber);
 
-				var fading = function () {
+				var fading = function() {
 					this.setAlpha(this.fadingNumber);
 					if (this.fadingNumber == 100) {
 						clearInterval(this.fadingInterval);
@@ -7651,12 +7630,12 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			fadeOut: function (callback) {
+			fadeOut: function(callback) {
 				if (typeof this.fadingNumber == "undefined")
 					this.fadingNumber = 100;
 				this.setAlpha(this.fadingNumber);
 
-				var fading = function () {
+				var fading = function() {
 					this.setAlpha(this.fadingNumber);
 					if (this.fadingNumber == 0) {
 						clearInterval(this.fadingInterval);
@@ -7672,7 +7651,7 @@ define("scripts/lib/ucren.js", function (exports) {
 				return this;
 			},
 
-			useMouseAction: function (className, actions) {
+			useMouseAction: function(className, actions) {
 				/**
 				 *  调用示例:  el.useMouseAction("xbutton", "over,out,down,up");
 				 *  使用效果:  el 会在 "xbutton xbutton-over","xbutton xbutton-out","xbutton xbutton-down","xbutton xbutton-up"
@@ -7703,7 +7682,7 @@ define("scripts/lib/ucren.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\background.js
  */
-define("scripts/object/background.js", function (exports) {
+define("scripts/object/background.js", function(exports) {
 	var Ucren = require("scripts/lib/ucren");
 	var layer = require("scripts/layer");
 	var timeline = require("scripts/timeline");
@@ -7711,15 +7690,15 @@ define("scripts/object/background.js", function (exports) {
 
 	var random = Ucren.randomNumber;
 
-	exports.set = function () {
+	exports.set = function() {
 		image = layer.createImage("default", "images/background.jpg", 0, 0, 640, 480);
 	};
 
-	exports.wobble = function () {
+	exports.wobble = function() {
 		time = timeline.setInterval(wobble, 50);
 	};
 
-	exports.stop = function () {
+	exports.stop = function() {
 		time.stop();
 		image.attr({
 			x: 0,
@@ -7744,24 +7723,24 @@ define("scripts/object/background.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\console.js
  */
-define("scripts/object/console.js", function (exports) {
+define("scripts/object/console.js", function(exports) {
 	var layer = require("scripts/layer");
 
 	var x = 16,
 		y = 0;
 	var texts = [];
 
-	exports.set = function () {
+	exports.set = function() {
 
 	};
 
-	exports.clear = function () {
+	exports.clear = function() {
 		for (var i = 0, l = texts.length; i < l; i++)
 			texts[i].remove();
 		texts.length = y = 0;
 	};
 
-	exports.log = function (text) {
+	exports.log = function(text) {
 		y += 20;
 		texts.push(layer.createText("default", text, x, y));
 	};;
@@ -7773,7 +7752,7 @@ define("scripts/object/console.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\developing.js
  */
-define("scripts/object/developing.js", function (exports) {
+define("scripts/object/developing.js", function(exports) {
 	var layer = require("scripts/layer");
 	var tween = require("scripts/lib/tween");
 	var timeline = require("scripts/timeline");
@@ -7787,11 +7766,12 @@ define("scripts/object/developing.js", function (exports) {
 
 	exports.anims = [];
 
-	exports.set = function () {
-		this.image = layer.createImage("default", "images/developing.png", 103, 218, 429, 53).hide().scale(1e-5, 1e-5);
+	exports.set = function() {
+		this.image = layer.createImage("default", "images/developing.png", 103, 218, 429, 53).hide().scale(
+			1e-5, 1e-5);
 	};
 
-	exports.show = function (start) {
+	exports.show = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: 500,
@@ -7806,7 +7786,7 @@ define("scripts/object/developing.js", function (exports) {
 		this.hide(2000);
 	};
 
-	exports.hide = function (start) {
+	exports.hide = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: 500,
@@ -7821,15 +7801,15 @@ define("scripts/object/developing.js", function (exports) {
 
 	// 显示/隐藏 相关
 
-	exports.onZoomStart = function () {
+	exports.onZoomStart = function() {
 		this.image.show();
 	};
 
-	exports.onZooming = function (time, sz, ez, z) {
+	exports.onZooming = function(time, sz, ez, z) {
 		this.image.scale(z = exponential(time, sz, ez - sz, 500), z);
 	};
 
-	exports.onZoomEnd = function (sz, ez, mode) {
+	exports.onZoomEnd = function(sz, ez, mode) {
 		if (mode === "hide")
 			this.image.hide();
 	};;
@@ -7841,7 +7821,7 @@ define("scripts/object/developing.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\dojo.js
  */
-define("scripts/object/dojo.js", function (exports) {
+define("scripts/object/dojo.js", function(exports) {
 	var rotate = require("scripts/factory/rotate");
 	var tween = require("scripts/lib/tween");
 
@@ -7854,7 +7834,7 @@ define("scripts/object/dojo.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\flame.js
  */
-define("scripts/object/flame.js", function (exports) {
+define("scripts/object/flame.js", function(exports) {
 
 	/**
 	 * 火焰模块
@@ -7932,8 +7912,10 @@ define("scripts/object/flame.js", function (exports) {
 		center = [trunc(ic[0] + cos(ia) * il * (1 - age)), trunc(ic[1] + sin(ia) * il * (1 - age))];
 		p1 = [trunc(center[0] - cos(ia) * radius * age), trunc(center[1] - sin(ia) * radius * age)];
 		p2 = [trunc(center[0] + cos(ia) * radius * age), trunc(center[1] + sin(ia) * radius * age)];
-		p3 = [trunc(center[0] - cos(ia + .5 * PI) * radius * .4 * age), trunc(center[1] - sin(ia + .5 * PI) * radius * .4 * age)];
-		p4 = [trunc(center[0] - cos(ia - .5 * PI) * radius * .4 * age), trunc(center[1] - sin(ia - .5 * PI) * radius * .4 * age)];
+		p3 = [trunc(center[0] - cos(ia + .5 * PI) * radius * .4 * age), trunc(center[1] - sin(ia + .5 * PI) *
+			radius * .4 * age)];
+		p4 = [trunc(center[0] - cos(ia - .5 * PI) * radius * .4 * age), trunc(center[1] - sin(ia - .5 * PI) *
+			radius * .4 * age)];
 
 		item.path.attr({
 			path: 'M' + p1 + ' Q' + [p3, p2, p4, p1].join(' ')
@@ -7950,17 +7932,17 @@ define("scripts/object/flame.js", function (exports) {
 		delete flames[n];
 	};
 
-	exports.create = function (ox, oy, start) {
+	exports.create = function(ox, oy, start) {
 		var timer1, timer2;
 
 		var object = {
-			pos: function (x, y) {
+			pos: function(x, y) {
 				nx = x;
 				ny = y;
 				image.attr("x", nx - 21).attr("y", ny - 21);
 			},
 
-			remove: function () {
+			remove: function() {
 				[timer1, timer2].invoke("stop");
 				image.remove();
 
@@ -7974,11 +7956,12 @@ define("scripts/object/flame.js", function (exports) {
 		var image = layer.image("images/smoke.png", nx - 21, ny - 21, 43, 43).hide();
 		var flames = {};
 
-		timer1 = timeline.setTimeout(function () {
+		timer1 = timeline.setTimeout(function() {
 			image.show();
-			timer2 = timeline.setInterval(function () {
+			timer2 = timeline.setInterval(function() {
 				if (random() < 0.9)
-					appendFlame([nx, ny], PI * 2 * random(), 60, 200 + 500 * random(), flames);
+					appendFlame([nx, ny], PI * 2 * random(), 60, 200 + 500 * random(),
+						flames);
 
 				for (var p in flames)
 					updateFlame(flames, p);
@@ -7999,7 +7982,7 @@ define("scripts/object/flame.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\flash.js
  */
-define("scripts/object/flash.js", function (exports) {
+define("scripts/object/flash.js", function(exports) {
 	/**
 	 *
 	 */
@@ -8022,12 +8005,12 @@ define("scripts/object/flash.js", function (exports) {
 	// if( Ucren.isIe || Ucren.isSafari )
 	// 	switchOn = false;
 
-	exports.set = switchOn ? function () {
+	exports.set = switchOn ? function() {
 		image = layer.createImage("flash", "images/flash.png", 0, 0, 358, 20).hide();
 		snd = sound.create("sound/splatter");
 	} : Ucren.nul;
 
-	exports.showAt = switchOn ? function (x, y, an) {
+	exports.showAt = switchOn ? function(x, y, an) {
 
 		image.rotate(an, true).scale(1e-5, 1e-5).attr({
 			x: x + xDiff,
@@ -8057,7 +8040,7 @@ define("scripts/object/flash.js", function (exports) {
 		});
 	} : Ucren.nul;
 
-	exports.onTimeUpdate = switchOn ? function (time, a, b, z) {
+	exports.onTimeUpdate = switchOn ? function(time, a, b, z) {
 		image.scale(z = anim(time, a, b - a, dur), z);
 	} : Ucren.nul;;
 
@@ -8068,17 +8051,17 @@ define("scripts/object/flash.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\fps.js
  */
-define("scripts/object/fps.js", function (exports) {
+define("scripts/object/fps.js", function(exports) {
 	var layer = require("scripts/layer");
 	var timeline = require("scripts/timeline");
 
 	var text, fps = "fps: ";
 
-	exports.set = function () {
+	exports.set = function() {
 		text = layer.createText("default", fps + "0", 4, 470).attr("fill", "#ccc");
 	};
 
-	exports.update = function () {
+	exports.update = function() {
 		text.attr("text", fps + (timeline.getFPS() >> 0));
 	};;
 
@@ -8089,7 +8072,7 @@ define("scripts/object/fps.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\game-over.js
  */
-define("scripts/object/game-over.js", function (exports) {
+define("scripts/object/game-over.js", function(exports) {
 	var layer = require("scripts/layer");
 	var tween = require("scripts/lib/tween");
 	var timeline = require("scripts/timeline");
@@ -8104,11 +8087,12 @@ define("scripts/object/game-over.js", function (exports) {
 
 	exports.anims = [];
 
-	exports.set = function () {
-		this.image = layer.createImage("default", "images/game-over.png", 75, 198, 490, 85).hide().scale(1e-5, 1e-5);
+	exports.set = function() {
+		this.image = layer.createImage("default", "images/game-over.png", 75, 198, 490, 85).hide().scale(
+			1e-5, 1e-5);
 	};
 
-	exports.show = function (start) {
+	exports.show = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: 500,
@@ -8121,7 +8105,7 @@ define("scripts/object/game-over.js", function (exports) {
 		});
 	};
 
-	exports.hide = function (start) {
+	exports.hide = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: 500,
@@ -8136,16 +8120,16 @@ define("scripts/object/game-over.js", function (exports) {
 
 	// 显示/隐藏 相关
 
-	exports.onZoomStart = function (sz, ez, mode) {
+	exports.onZoomStart = function(sz, ez, mode) {
 		if (mode == "show")
 			this.image.show();
 	};
 
-	exports.onZooming = function (time, sz, ez, z) {
+	exports.onZooming = function(time, sz, ez, z) {
 		this.image.scale(z = exponential(time, sz, ez - sz, 500), z);
 	};
 
-	exports.onZoomEnd = function (sz, ez, mode) {
+	exports.onZoomEnd = function(sz, ez, mode) {
 		if (mode == "show")
 			state("click-enable").on();
 		else if (mode === "hide")
@@ -8159,11 +8143,12 @@ define("scripts/object/game-over.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\home-desc.js
  */
-define("scripts/object/home-desc.js", function (exports) {
+define("scripts/object/home-desc.js", function(exports) {
 	var displacement = require("scripts/factory/displacement");
 	var tween = require("scripts/lib/tween");
 
-	exports = displacement.create("images/home-desc.png", 161, 91, -161, 140, 7, 127, tween.exponential.co, 500);;
+	exports = displacement.create("images/home-desc.png", 161, 91, -161, 140, 7, 127, tween.exponential.co,
+		500);;
 
 	return exports;
 });
@@ -8172,7 +8157,7 @@ define("scripts/object/home-desc.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\home-mask.js
  */
-define("scripts/object/home-mask.js", function (exports) {
+define("scripts/object/home-mask.js", function(exports) {
 	var displacement = require("scripts/factory/displacement");
 	var tween = require("scripts/lib/tween");
 
@@ -8185,7 +8170,7 @@ define("scripts/object/home-mask.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\knife.js
  */
-define("scripts/object/knife.js", function (exports) {
+define("scripts/object/knife.js", function(exports) {
 	var timeline = require("scripts/timeline");
 	var layer = require("scripts/layer").getLayer("knife");
 	var Ucren = require("scripts/lib/ucren");
@@ -8214,7 +8199,7 @@ define("scripts/object/knife.js", function (exports) {
 		knifes.push(this);
 	}
 
-	ClassKnifePart.prototype.set = function () {
+	ClassKnifePart.prototype.set = function() {
 		var sx, sy, ex, ey, dx, dy, ax, ay;
 
 		sx = this.sx;
@@ -8250,11 +8235,11 @@ define("scripts/object/knife.js", function (exports) {
 		return this;
 	};
 
-	ClassKnifePart.prototype.update = function (time) {
+	ClassKnifePart.prototype.update = function(time) {
 		this.line.attr("stroke-width", stroke * (1 - time / life) + "px");
 	};
 
-	ClassKnifePart.prototype.end = function () {
+	ClassKnifePart.prototype.end = function() {
 		this.line.remove();
 
 		var index;
@@ -8262,11 +8247,11 @@ define("scripts/object/knife.js", function (exports) {
 			knifes.splice(index, 1);
 	};
 
-	exports.newKnife = function () {
+	exports.newKnife = function() {
 		lastX = lastY = null;
 	};
 
-	exports.through = function (x, y) {
+	exports.through = function(x, y) {
 		if (!switchState)
 			return;
 		var ret = null;
@@ -8284,21 +8269,21 @@ define("scripts/object/knife.js", function (exports) {
 		return ret;
 	};
 
-	exports.pause = function () {
+	exports.pause = function() {
 		anims.clear();
 		this.switchOff();
 	};
 
-	exports.switchOff = function () {
+	exports.switchOff = function() {
 		switchState = false;
 	};
 
-	exports.switchOn = function () {
+	exports.switchOn = function() {
 		switchState = true;
 		this.endAll();
 	};
 
-	exports.endAll = function () {
+	exports.endAll = function() {
 		for (var i = knifes.length - 1; i >= 0; i--)
 			knifes[i].end();
 	};;
@@ -8310,7 +8295,7 @@ define("scripts/object/knife.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\light.js
  */
-define("scripts/object/light.js", function (exports) {
+define("scripts/object/light.js", function(exports) {
 	/**
 	 * 炸弹爆炸时的光线
 	 */
@@ -8336,25 +8321,25 @@ define("scripts/object/light.js", function (exports) {
 	for (var i = 0; i < lightsNum; i++)
 		indexs[i] = i;
 
-	exports.start = function (boom) {
+	exports.start = function(boom) {
 		var x = boom.originX,
 			y = boom.originY,
 			time = 0,
 			idx = indexs.random();
 
-		var b = function () {
+		var b = function() {
 			build(x, y, idx[this]);
 		};
 
 		for (var i = 0; i < lightsNum; i++)
 			timeline.setTimeout(b.bind(i), time += 200);
 
-		timeline.setTimeout(function () {
+		timeline.setTimeout(function() {
 			this.overWhiteLight();
 		}.bind(this), time + 200);
 	};
 
-	exports.overWhiteLight = function () {
+	exports.overWhiteLight = function() {
 		message.postMessage("overWhiteLight.show");
 		this.removeLights();
 
@@ -8364,11 +8349,11 @@ define("scripts/object/light.js", function (exports) {
 			stroke: "none"
 		});
 		var control = {
-			onTimeUpdate: function (time) {
+			onTimeUpdate: function(time) {
 				mask.attr("opacity", 1 - time / dur);
 			},
 
-			onTimeEnd: function () {
+			onTimeEnd: function() {
 				mask.remove();
 				message.postMessage("game.over");
 			}
@@ -8384,7 +8369,7 @@ define("scripts/object/light.js", function (exports) {
 
 	};
 
-	exports.removeLights = function () {
+	exports.removeLights = function() {
 		for (var i = 0, l = lights.length; i < l; i++)
 			lights[i].remove();
 		lights.length = 0;
@@ -8422,7 +8407,7 @@ define("scripts/object/light.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\logo.js
  */
-define("scripts/object/logo.js", function (exports) {
+define("scripts/object/logo.js", function(exports) {
 	var displacement = require("scripts/factory/displacement");
 	var tween = require("scripts/lib/tween");
 
@@ -8435,7 +8420,7 @@ define("scripts/object/logo.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\lose.js
  */
-define("scripts/object/lose.js", function (exports) {
+define("scripts/object/lose.js", function(exports) {
 	var layer = require("scripts/layer");
 	var tween = require("scripts/lib/tween");
 	var timeline = require("scripts/timeline");
@@ -8480,13 +8465,13 @@ define("scripts/object/lose.js", function (exports) {
 
 	exports.anims = [];
 
-	exports.set = function () {
+	exports.set = function() {
 		o1 = layer.createImage("default", conf1.src, conf1.sx, conf1.y, conf1.w, conf1.h).hide();
 		o2 = layer.createImage("default", conf2.src, conf2.sx, conf2.y, conf2.w, conf2.h).hide();
 		o3 = layer.createImage("default", conf3.src, conf3.sx, conf3.y, conf3.w, conf3.h).hide();
 	};
 
-	exports.show = function (start) {
+	exports.show = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: animLength,
@@ -8499,7 +8484,7 @@ define("scripts/object/lose.js", function (exports) {
 		});
 	};
 
-	exports.hide = function (start) {
+	exports.hide = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: animLength,
@@ -8512,7 +8497,7 @@ define("scripts/object/lose.js", function (exports) {
 		});
 	};
 
-	exports.showLoseAt = function (x) {
+	exports.showLoseAt = function(x) {
 
 		var infx, inf = [
 			[o1, conf1],
@@ -8531,14 +8516,14 @@ define("scripts/object/lose.js", function (exports) {
 			message.postMessage("game.over");
 	};
 
-	exports.scaleImage = function (image) {
+	exports.scaleImage = function(image) {
 		var dur = 500;
 
-		image.myOnScaling = image.myOnScaling || function (time, z) {
+		image.myOnScaling = image.myOnScaling || function(time, z) {
 			this.scale(z = back(time, 1e-5, 1 - 1e-5, dur), z);
 		};
 
-		image.myOnScaleEnd = image.myOnScaleEnd || function () {
+		image.myOnScaleEnd = image.myOnScaleEnd || function() {
 			this.scale(1, 1);
 		};
 
@@ -8554,25 +8539,25 @@ define("scripts/object/lose.js", function (exports) {
 
 	// 显示/隐藏 相关
 
-	exports.onTimeUpdate = function (time, mode, x1s, x1e, x2s, x2e, x3s, x3e) {
+	exports.onTimeUpdate = function(time, mode, x1s, x1e, x2s, x2e, x3s, x3e) {
 		o1.attr("x", anim(time, x1s, x1e - x1s, animLength));
 		o2.attr("x", anim(time, x2s, x2e - x2s, animLength));
 		o3.attr("x", anim(time, x3s, x3e - x3s, animLength));
 	};
 
-	exports.onTimeStart = function (mode) {
+	exports.onTimeStart = function(mode) {
 		if (mode == "show")
 			[o1, o2, o3].invoke("show");
 	};
 
-	exports.onTimeEnd = function (mode) {
+	exports.onTimeEnd = function(mode) {
 		if (mode == "hide")
 			[o1, o2, o3].invoke("hide"),
 			[
 				[o1, conf1],
 				[o2, conf2],
 				[o3, conf3]
-			].forEach(function (infx) {
+			].forEach(function(infx) {
 				infx[0].attr("src", infx[1].src.replace("xf.png", "x.png"));
 			});
 	};
@@ -8582,7 +8567,7 @@ define("scripts/object/lose.js", function (exports) {
 		var duration = 500;
 
 		var control = {
-			show: function (start) {
+			show: function(start) {
 				timeline.createTask({
 					start: start,
 					duration: duration,
@@ -8594,7 +8579,7 @@ define("scripts/object/lose.js", function (exports) {
 				});
 			},
 
-			hide: function (start) {
+			hide: function(start) {
 				timeline.createTask({
 					start: start,
 					duration: duration,
@@ -8606,15 +8591,15 @@ define("scripts/object/lose.js", function (exports) {
 				});
 			},
 
-			onScaling: function (time, anim, a, b, z) {
+			onScaling: function(time, anim, a, b, z) {
 				image.scale(z = anim(time, a, b - a, duration), z);
 			},
 
-			onShowEnd: function () {
+			onShowEnd: function() {
 				this.hide(1500);
 			},
 
-			onHideEnd: function () {
+			onHideEnd: function() {
 				image.remove();
 			}
 		};
@@ -8629,7 +8614,7 @@ define("scripts/object/lose.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\new-game.js
  */
-define("scripts/object/new-game.js", function (exports) {
+define("scripts/object/new-game.js", function(exports) {
 	var rotate = require("scripts/factory/rotate");
 	var tween = require("scripts/lib/tween");
 
@@ -8642,7 +8627,7 @@ define("scripts/object/new-game.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\new.js
  */
-define("scripts/object/new.js", function (exports) {
+define("scripts/object/new.js", function(exports) {
 	var layer = require("scripts/layer");
 	var tween = require("scripts/lib/tween");
 	var timeline = require("scripts/timeline");
@@ -8666,15 +8651,15 @@ define("scripts/object/new.js", function (exports) {
 
 	exports.anims = [];
 
-	exports.set = function () {
+	exports.set = function() {
 		image = layer.createImage("default", "images/new.png", sx, sy, sw, sh);
 	};
 
-	exports.unset = function () {
+	exports.unset = function() {
 
 	};
 
-	exports.show = function (start) {
+	exports.show = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: 500,
@@ -8687,7 +8672,7 @@ define("scripts/object/new.js", function (exports) {
 		});
 	};
 
-	exports.hide = function (start) {
+	exports.hide = function(start) {
 		this.anims.clear();
 		timeline.createTask({
 			start: start,
@@ -8699,7 +8684,7 @@ define("scripts/object/new.js", function (exports) {
 		});
 	};
 
-	exports.jump = function () {
+	exports.jump = function() {
 		this.anims.clear();
 		timeline.createTask({
 			start: 0,
@@ -8712,9 +8697,9 @@ define("scripts/object/new.js", function (exports) {
 
 	// 显示相关
 
-	exports.onShowStart = function () {};
+	exports.onShowStart = function() {};
 
-	exports.onShowing = function (time, sx, ex, sy, ey, sw, ew, sh, eh) {
+	exports.onShowing = function(time, sx, ex, sy, ey, sw, ew, sh, eh) {
 		image.attr({
 			x: showAnim(time, sx, ex - sx, 500),
 			y: showAnim(time, sy, ey - sy, 500),
@@ -8723,13 +8708,13 @@ define("scripts/object/new.js", function (exports) {
 		});
 	};
 
-	exports.onShowEnd = function () {
+	exports.onShowEnd = function() {
 		this.jump();
 	};
 
 	// 跳跃相关
 
-	exports.onJumping = function (time) {
+	exports.onJumping = function(time) {
 		var t = parseInt(time / cycleTime);
 
 		time = time % cycleTime;
@@ -8745,7 +8730,7 @@ define("scripts/object/new.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\ninja.js
  */
-define("scripts/object/ninja.js", function (exports) {
+define("scripts/object/ninja.js", function(exports) {
 	var displacement = require("scripts/factory/displacement");
 	var tween = require("scripts/lib/tween");
 
@@ -8761,7 +8746,7 @@ define("scripts/object/ninja.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\quit.js
  */
-define("scripts/object/quit.js", function (exports) {
+define("scripts/object/quit.js", function(exports) {
 	var rotate = require("scripts/factory/rotate");
 	var tween = require("scripts/lib/tween");
 
@@ -8774,7 +8759,7 @@ define("scripts/object/quit.js", function (exports) {
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\object\score.js
  */
-define("scripts/object/score.js", function (exports) {
+define("scripts/object/score.js", function(exports) {
 	var layer = require("scripts/layer");
 	var tween = require("scripts/lib/tween");
 	var timeline = require("scripts/timeline");
@@ -8800,13 +8785,13 @@ define("scripts/object/score.js", function (exports) {
 
 	exports.anims = [];
 
-	exports.set = function () {
+	exports.set = function() {
 		image = layer.createImage("default", "images/score.png", imageSx, 8, 29, 31).hide();
 		text1 = layer.createText("default", "0", text1Sx, 24, "90-#fc7f0c-#ffec53", "30px").hide();
 		text2 = layer.createText("default", "BEST 999", text2Sx, 48, "#af7c05", "14px").hide();
 	};
 
-	exports.show = function (start) {
+	exports.show = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: animLength,
@@ -8819,7 +8804,7 @@ define("scripts/object/score.js", function (exports) {
 		});
 	};
 
-	exports.hide = function (start) {
+	exports.hide = function(start) {
 		timeline.createTask({
 			start: start,
 			duration: animLength,
@@ -8832,10 +8817,10 @@ define("scripts/object/score.js", function (exports) {
 		});
 	};
 
-	exports.number = function (number) {
+	exports.number = function(number) {
 		text1.attr("text", number || 0);
 		image.scale(1.2, 1.2);
-		setTimeout(function () {
+		setTimeout(function() {
 			image.scale(1, 1);
 		}, 60);
 		// message.postMessage( number, "score.change" );
@@ -8843,18 +8828,18 @@ define("scripts/object/score.js", function (exports) {
 
 	// 显示/隐藏 相关
 
-	exports.onTimeUpdate = function (time, mode, isx, iex, t1sx, t1ex, t2sx, t2ex) {
+	exports.onTimeUpdate = function(time, mode, isx, iex, t1sx, t1ex, t2sx, t2ex) {
 		image.attr("x", anim(time, isx, iex - isx, animLength));
 		text1.attr("x", anim(time, t1sx, t1ex - t1sx, animLength));
 		text2.attr("x", anim(time, t2sx, t2ex - t2sx, animLength));
 	};
 
-	exports.onTimeStart = function (mode) {
+	exports.onTimeStart = function(mode) {
 		if (mode === "show")
 			[image, text1, text2].invoke("show");
 	};
 
-	exports.onTimeEnd = function (mode) {
+	exports.onTimeEnd = function(mode) {
 		if (mode === "hide")
 			[image, text1, text2].invoke("hide"),
 			text1.attr("text", 0);
