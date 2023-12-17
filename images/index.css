@@ -14,8 +14,7 @@ body {
 	background: #484848 url('./sgrz.jpg') no-repeat center/cover;
 }
 
-#extra,
-#view {
+#extra {
 	position: fixed;
 	left: 50%;
 	top: 50%;
@@ -24,13 +23,6 @@ body {
 	transform: translate(-50%, -50%);
 	text-align: left;
 	background: #fff;
-}
-
-#view {
-	display: block;
-	background: transparent url('./blank.gif') repeat 0 0;
-	cursor: default;
-	z-index: 20;
 }
 
 #extra {

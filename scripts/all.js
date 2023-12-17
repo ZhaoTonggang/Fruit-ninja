@@ -1,4 +1,4 @@
-﻿/**
+/**
  * this file was compiled by jsbuild 0.9.6
  * @date Mon, 16 Jul 2012 18:46:47 UTC
  * @author dron
@@ -138,7 +138,7 @@ define("scripts/control.js", function(exports) {
 		var de = document.documentElement;
 		var fix = function(e) {
 			canvasLeft = (de.clientWidth - 640) / 2;
-			canvasTop = (de.clientHeight - 480) / 2 - 40;
+			canvasTop = (de.clientHeight - 480) / 2;
 		};
 		fix();
 		Ucren.addEvent(window, "resize", fix);
@@ -3714,7 +3714,7 @@ define("scripts/lib/raphael.js", function(exports) {
 				}
 			};
 			a[H] = function() {
-				return "Your browser supports SVG.\nYou are running Raphaël " + this.version
+				return "您的浏览器支持 SVG。\n您正在运行 Raphaël " + this.version
 			};
 			var bH = function(a, b) {
 					var c = bG("path");
@@ -4516,7 +4516,7 @@ define("scripts/lib/raphael.js", function(exports) {
 					return d[v](q)
 				};
 			a[H] = function() {
-				return "Your browser doesn’t support SVG. Falling down to VML.\nYou are running Raphaël " +
+				return "您的浏览器不支持 SVG。下降到 VML。\n您正在运行 Raphaël " +
 					this.version
 			};
 			bH = function(a, b) {
