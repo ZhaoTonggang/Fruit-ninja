@@ -6,21 +6,22 @@ body {
 	height: 100%;
 	margin: 0;
 	padding: 0;
+	touch-action: none;
+	overflow: hidden;
 }
 
 body {
-	position: fixed;
 	background: #484848 url('./sgrz.jpg') no-repeat center/cover;
 }
 
 #extra,
 #view {
-	position: absolute;
+	position: fixed;
 	left: 50%;
 	top: 50%;
 	width: 640px;
 	height: 480px;
-	margin: -280px auto auto -320px;
+	transform: translate(-50%, -50%);
 	text-align: left;
 	background: #fff;
 }
