@@ -135,10 +135,10 @@ define("scripts/control.js", function(exports) {
 		});
 	};
 	exports.fixCanvasPos = function() {
-		var de = document.documentElement;
-		var fix = function(e) {
-			canvasLeft = (de.clientWidth - 640) / 2;
-			canvasTop = (de.clientHeight - 480) / 2;
+		var be = document.getElementById('extra');
+		var fix = function() {
+			canvasLeft = be.getBoundingClientRect().left + 10;
+			canvasTop = be.getBoundingClientRect().top + 10;
 		};
 		fix();
 		Ucren.addEvent(window, "resize", fix);
@@ -604,6 +604,8 @@ define("scripts/sence.js", function(exports) {
 	exports.showDojo = function(callback) {
 		developing.show(250);
 		setTimeout(callback, 1500);
+		//打开游戏盒
+		window.open('https://gamebox.heheda.top', '_blank');
 	};
 
 	// to exit dojo mode
@@ -616,6 +618,8 @@ define("scripts/sence.js", function(exports) {
 	exports.showQuit = function(callback) {
 		developing.show(250);
 		setTimeout(callback, 1500);
+		// 打开广告页
+		window.open('./ads/', '_self');
 	};
 
 	// to exit quit page
@@ -8058,7 +8062,7 @@ define("scripts/object/fps.js", function(exports) {
 	var text, fps = "fps: ";
 
 	exports.set = function() {
-		text = layer.createText("default", fps + "0", 4, 470).attr("fill", "#ccc");
+		text = layer.createText("default", fps + "0", 10, 460).attr("fill", "#ccc");
 	};
 
 	exports.update = function() {
