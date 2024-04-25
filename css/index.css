@@ -1,4 +1,6 @@
 * {
+	list-style: none;
+	user-select: none;
 	padding: 0;
 	margin: 0;
 	touch-action: none;
@@ -23,6 +25,7 @@ body {
 	border: 10px ridge #794621;
 	box-shadow: 0 0 100px 10px #794621;
 	border-radius: 20px;
+	cursor: url('../images/cursor.png'), auto;
 }
 
 #extra .layer {
