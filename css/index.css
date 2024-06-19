@@ -26,6 +26,7 @@ body {
 	box-shadow: 0 0 100px 10px #794621;
 	border-radius: 20px;
 	cursor: url('../images/cursor.png'), auto;
+	z-index: 999999;
 }
 
 #extra .layer {
