@@ -31,10 +31,6 @@ body {
 
 #extra .layer {
 	position: absolute;
-	left: 0;
-	top: 0;
-	width: 640px;
-	height: 480px;
 	z-index: 10;
 }
 
