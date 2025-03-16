@@ -5,222 +5,217 @@
  * @site http://ucren.com
  */
 void
-
-function(global) {
-	var mapping = {},
-		cache = {};
-	global.startModule = function(m) {
-		require(m).start();
-	};
-	global.define = function(id, func) {
-		mapping[id] = func;
-	};
-	global.require = function(id) {
-		if (!/\.js$/.test(id))
-			id += '.js';
-		if (cache[id])
-			return cache[id];
-		else
-			return cache[id] = mapping[id]({});
-	};
-}(this);
-
+	(function(global) {
+		const mapping = {}; // 存储模块定义
+		const cache = {}; // 缓存已加载的模块
+		// 启动指定模块
+		global.startModule = function(moduleId) {
+			require(moduleId).start();
+		};
+		// 定义模块
+		global.define = function(id, factory) {
+			mapping[id] = factory;
+		};
+		// 加载模块
+		global.require = function(id) {
+			const isJsFile = /\.js$/.test(id);
+			const moduleId = isJsFile ? id : `${id}.js`; // 确保模块 ID 以 .js 结尾
+			// 如果模块已缓存，直接返回；否则加载并缓存
+			return cache[moduleId] || (cache[moduleId] = mapping[moduleId]({}));
+		};
+	})(this);
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\collide.js
  */
 define("scripts/collide.js", function(exports) {
-	var fruit = require("scripts/factory/fruit");
-	var Ucren = require("scripts/lib/ucren");
-	var fruits = fruit.getFruitInView();
-	/**
-	 * 碰撞检测
-	 */
+	const fruit = require("scripts/factory/fruit");
+	const Ucren = require("scripts/lib/ucren");
+	const fruits = fruit.getFruitInView();
+	//  碰撞检测
 	exports.check = function(knife) {
-		var ret = [],
-			index = 0;
-		fruits.forEach(function(fruit) {
-			var ck = lineInEllipse(
+		return fruits.filter(fruit =>
+			lineInEllipse(
 				knife.slice(0, 2),
 				knife.slice(2, 4),
 				[fruit.originX, fruit.originY],
 				fruit.radius
-			);
-			if (ck)
-				ret[index++] = fruit;
-		});
-		return ret;
+			)
+		);
 	};
-
-	function sqr(x) {
-		return x * x;
-	}
-
-	function sign(n) {
-		return n < 0 ? -1 : (n > 0 ? 1 : 0);
-	}
-
-	function equation12(a, b, c) {
-		if (a == 0) return;
-		var delta = b * b - 4 * a * c;
-		if (delta == 0)
-			return [-1 * b / (2 * a), -1 * b / (2 * a)];
-		else if (delta > 0)
-			return [(-1 * b + Math.sqrt(delta)) / (2 * a), (-1 * b - Math.sqrt(delta)) / (2 * a)];
+	// 判断线段和椭圆是否相交
+	function lineInEllipse(p1, p2, c, r, e = 1) {
+		const intersections = lineXEllipse(p1, p2, c, r, e);
+		return intersections && (intersections[0] || intersections[1]);
 	}
 	// 返回线段和椭圆的两个交点，如果不相交，返回 null
 	function lineXEllipse(p1, p2, c, r, e) {
-		// 线段：p1, p2    圆心：c    半径：r    离心率：e
-		if (r <= 0) return;
-		e = e === undefined ? 1 : e;
-		var t1 = r,
-			t2 = r * e,
-			k;
-		a = sqr(t2) * sqr(p1[0] - p2[0]) + sqr(t1) * sqr(p1[1] - p2[1]);
-		if (a <= 0) return;
-		b = 2 * sqr(t2) * (p2[0] - p1[0]) * (p1[0] - c[0]) + 2 * sqr(t1) * (p2[1] - p1[1]) * (p1[1] - c[1]);
-		c = sqr(t2) * sqr(p1[0] - c[0]) + sqr(t1) * sqr(p1[1] - c[1]) - sqr(t1) * sqr(t2);
-		if (!(k = equation12(a, b, c, t1, t2))) return;
-		var result = [
-			[p1[0] + k[0] * (p2[0] - p1[0]), p1[1] + k[0] * (p2[1] - p1[1])],
-			[p1[0] + k[1] * (p2[0] - p1[0]), p1[1] + k[1] * (p2[1] - p1[1])]
-		];
-		if (!((sign(result[0][0] - p1[0]) * sign(result[0][0] - p2[0]) <= 0) &&
-				(sign(result[0][1] - p1[1]) * sign(result[0][1] - p2[1]) <= 0)))
-			result[0] = null;
-		if (!((sign(result[1][0] - p1[0]) * sign(result[1][0] - p2[0]) <= 0) &&
-				(sign(result[1][1] - p1[1]) * sign(result[1][1] - p2[1]) <= 0)))
-			result[1] = null;
-		return result;
+		if (r <= 0) return null;
+		const t1 = r;
+		const t2 = r * e;
+		const dx = p2[0] - p1[0];
+		const dy = p2[1] - p1[1];
+		const a = t2 * t2 * dx * dx + t1 * t1 * dy * dy;
+		if (a <= 0) return null;
+		const b = 2 * t2 * t2 * dx * (p1[0] - c[0]) + 2 * t1 * t1 * dy * (p1[1] - c[1]);
+		const cTerm = t2 * t2 * (p1[0] - c[0]) ** 2 + t1 * t1 * (p1[1] - c[1]) ** 2 - t1 * t1 * t2 * t2;
+		const roots = solveQuadratic(a, b, cTerm);
+		if (!roots) return null;
+		const intersections = roots.map(t => [
+			p1[0] + t * dx,
+			p1[1] + t * dy
+		]).filter(point =>
+			isPointOnSegment(point, p1, p2)
+		);
+		return intersections.length ? intersections : null;
 	}
-	// 判断计算线段和椭圆是否相交
-	function lineInEllipse(p1, p2, c, r, e) {
-		var t = lineXEllipse(p1, p2, c, r, e);
-		return t && (t[0] || t[1]);
-	};
+	// 判断点是否在线段上
+	function isPointOnSegment(point, p1, p2) {
+		const [x, y] = point;
+		const [x1, y1] = p1;
+		const [x2, y2] = p2;
+		const isBetweenX = (x - x1) * (x - x2) <= 0;
+		const isBetweenY = (y - y1) * (y - y2) <= 0;
+		return isBetweenX && isBetweenY;
+	}
+	// 解二次方程 ax² + bx + c = 0
+	function solveQuadratic(a, b, c) {
+		const delta = b * b - 4 * a * c;
+		if (delta < 0) return null;
+		const sqrtDelta = Math.sqrt(delta);
+		return [
+			(-b + sqrtDelta) / (2 * a),
+			(-b - sqrtDelta) / (2 * a)
+		];
+	}
 	return exports;
 });
-
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\control.js
  */
 define("scripts/control.js", function(exports) {
-	var Ucren = require("scripts/lib/ucren");
-	var knife = require("scripts/object/knife");
-	var message = require("scripts/message");
-	var state = require("scripts/state");
-	var canvasLeft, canvasTop;
-	canvasLeft = canvasTop = 0;
+	const Ucren = require("scripts/lib/ucren");
+	const knife = require("scripts/object/knife");
+	const message = require("scripts/message");
+	const state = require("scripts/state");
+	let canvasLeft = 0,
+		canvasTop = 0;
+	let bili = 1; // 默认缩放比例为 1
+	const be = document.getElementById('extra');
+	// 初始化函数
 	exports.init = function() {
-		this.fixCanvasPos();
-		this.installDragger();
-		this.installClicker();
+		this.calculateScale(); // 计算缩放比例
+		this.fixCanvasPos(); // 修正画布位置
+		this.installDragger(); // 安装拖拽事件
+		this.installClicker(); // 安装点击事件
 	};
-	exports.installDragger = function() {
-		var dragger = new Ucren.BasicDrag({
-			type: "calc"
-		});
-		dragger.on("returnValue", function(dx, dy, x, y, kf) {
-			if (kf = knife.through(x - canvasLeft, y - canvasTop))
-				message.postMessage(kf, "slice");
-		});
-		dragger.on("startDrag", function() {
-			knife.newKnife();
-		});
-		dragger.bind(document.documentElement);
+	// 计算缩放比例
+	exports.calculateScale = function() {
+		const zoom = () => {
+			const WinHeight = 500,
+				WinWidth = 660;
+			bili = Math.min(window.innerHeight / WinHeight, window.innerWidth / WinWidth);
+			be.style.transform = "scale(" + bili + ")";
+		};
+		zoom();
+		Ucren.addEvent(window, "resize", zoom);
 	};
-	exports.installClicker = function() {
-		Ucren.addEvent(document, "click", function() {
-			if (state("click-enable").ison())
-				message.postMessage("click");
-		});
-	};
+	// 修正画布位置
 	exports.fixCanvasPos = function() {
-		var be = document.getElementById('extra');
-		var fix = function() {
-			canvasLeft = be.getBoundingClientRect().left + 10;
-			canvasTop = be.getBoundingClientRect().top + 10;
+		const fix = () => {
+			const rect = be.getBoundingClientRect();
+			// 考虑缩放比例，修正画布位置
+			canvasLeft = rect.left + 10 * bili;
+			canvasTop = rect.top + 10 * bili;
 		};
 		fix();
 		Ucren.addEvent(window, "resize", fix);
-	};;
+	};
+	// 安装拖拽事件
+	exports.installDragger = function() {
+		const dragger = new Ucren.BasicDrag({
+			type: "calc"
+		});
+		dragger.on("returnValue", (dx, dy, x, y, kf) => {
+			// 考虑缩放比例，修正坐标
+			const adjustedX = (x - canvasLeft) / bili;
+			const adjustedY = (y - canvasTop) / bili;
+			if (kf = knife.through(adjustedX, adjustedY)) {
+				message.postMessage(kf, "slice");
+			}
+		});
+		dragger.on("startDrag", knife.newKnife);
+		dragger.bind(document.documentElement);
+	};
+	// 安装点击事件
+	exports.installClicker = function() {
+		Ucren.addEvent(document, "click", () => {
+			if (state("click-enable").ison()) {
+				message.postMessage("click");
+			}
+		});
+	};
 	return exports;
 });
-
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\game.js
  */
 define("scripts/game.js", function(exports) {
-	/**
-	 * game logic
-	 */
-	var timeline = require("scripts/timeline");
-	var Ucren = require("scripts/lib/ucren");
-	var sound = require("scripts/lib/sound");
-	var fruit = require("scripts/factory/fruit");
-	var score = require("scripts/object/score");
-	var message = require("scripts/message");
-	var state = require("scripts/state");
-	var lose = require("scripts/object/lose");
-	var gameOver = require("scripts/object/game-over");
-	var knife = require("scripts/object/knife");
-	// var sence = require("scripts/sence");
-	var background = require("scripts/object/background");
-	var light = require("scripts/object/light");
-	var scoreNumber = 0;
-	var random = Ucren.randomNumber;
-	var volleyNum = 2,
+	const timeline = require("scripts/timeline");
+	const Ucren = require("scripts/lib/ucren");
+	const sound = require("scripts/lib/sound");
+	const fruit = require("scripts/factory/fruit");
+	const score = require("scripts/object/score");
+	const message = require("scripts/message");
+	const state = require("scripts/state");
+	const lose = require("scripts/object/lose");
+	const gameOver = require("scripts/object/game-over");
+	const knife = require("scripts/object/knife");
+	const background = require("scripts/object/background");
+	const light = require("scripts/object/light");
+	let scoreNumber = 0;
+	let fruits = [];
+	let gameInterval;
+	let snd, boomSnd;
+	let volleyNum = 2,
 		volleyMultipleNumber = 5;
-	var fruits = [];
-	var gameInterval;
-	var snd;
-	var boomSnd;
-	// fruit barbette
-	var barbette = function() {
-		if (fruits.length >= volleyNum)
-			return;
-		var startX = random(640),
-			endX = random(640),
+	const barbette = () => {
+		if (fruits.length >= volleyNum) return;
+		const startX = Ucren.randomNumber(640),
+			endX = Ucren.randomNumber(640),
 			startY = 600;
-		var f = fruit.create(startX, startY).shotOut(0, endX);
+		const f = fruit.create(startX, startY).shotOut(0, endX);
 		fruits.push(f);
 		snd.play();
 		barbette();
 	};
-	// start game
-	exports.start = function() {
+	exports.start = () => {
 		snd = sound.create("sound/throw");
 		boomSnd = sound.create("sound/boom");
-		timeline.setTimeout(function() {
+		timeline.setTimeout(() => {
 			state("game-state").set("playing");
-			gameInterval = timeline.setInterval(barbette, 1e3);
+			gameInterval = timeline.setInterval(barbette, 1000);
 		}, 500);
 	};
-	exports.gameOver = function() {
+	exports.gameOver = () => {
 		state("game-state").set("over");
 		gameInterval.stop();
 		gameOver.show();
-		// timeline.setTimeout(function(){
-		//     // sence.switchSence( "home-menu" );
-		//     // TODO: require 出现互相引用时，造成死循环，这个问题需要跟进，这里暂时用 postMessage 代替
-		//     message.postMessage( "home-menu", "sence.switchSence" );
-		// }, 2000);
 		scoreNumber = 0;
 		volleyNum = 2;
-		fruits.length = 0;
+		fruits = [];
 	};
-	exports.applyScore = function(score) {
-		if (score > volleyNum * volleyMultipleNumber)
-			volleyNum++,
+	exports.applyScore = (score) => {
+		if (score > volleyNum * volleyMultipleNumber) {
+			volleyNum++;
 			volleyMultipleNumber += 50;
+		}
 	};
 	exports.sliceAt = function(fruit, angle) {
-		var index;
-		if (state("game-state").isnot("playing"))
-			return;
-		if (fruit.type != "boom") {
+		if (state("game-state").isnot("playing")) return;
+		if (fruit.type !== "boom") {
 			fruit.broken(angle);
-			if (index = fruits.indexOf(fruit))
-				fruits.splice(index, 1);
+			const index = fruits.indexOf(fruit);
+			if (index > -1) fruits.splice(index, 1);
 			score.number(++scoreNumber);
 			this.applyScore(scoreNumber);
 		} else {
@@ -230,53 +225,42 @@ define("scripts/game.js", function(exports) {
 			light.start(fruit);
 		}
 	};
-	exports.pauseAllFruit = function() {
+	exports.pauseAllFruit = () => {
 		gameInterval.stop();
 		knife.pause();
-		fruits.invoke("pause");
+		fruits.forEach(f => f.pause());
 	};
-	// message.addEventListener("fruit.fallOff", function( fruit ){
-	// 	var index;
-	// 	if( ( index = fruits.indexOf( fruit ) ) > -1 )
-	// 	    fruits.splice( index, 1 );
-	// });
-	message.addEventListener("fruit.remove", function(fruit) {
-		var index;
-		if ((index = fruits.indexOf(fruit)) > -1)
-			fruits.splice(index, 1);
+	message.addEventListener("fruit.remove", (fruit) => {
+		const index = fruits.indexOf(fruit);
+		if (index > -1) fruits.splice(index, 1);
 	});
-	message.addEventListener("fruit.fallOutOfViewer", function(fruit) {
-		if (state("game-state").isnot("playing"))
-			return;
-
-		if (fruit.type != "boom")
-			lose.showLoseAt(fruit.originX);
+	message.addEventListener("fruit.fallOutOfViewer", (fruit) => {
+		if (state("game-state").isnot("playing")) return;
+		if (fruit.type !== "boom") lose.showLoseAt(fruit.originX);
 	});
-	message.addEventListener("game.over", function() {
+	message.addEventListener("game.over", () => {
 		exports.gameOver();
 		knife.switchOn();
 	});
-	message.addEventListener("overWhiteLight.show", function() {
+	message.addEventListener("overWhiteLight.show", () => {
 		knife.endAll();
-		for (var i = fruits.length - 1; i >= 0; i--)
+		for (var i = fruits.length - 1; i >= 0; i--) {
 			fruits[i].remove();
+		}
 		background.stop();
 	});
-	message.addEventListener("click", function() {
+	message.addEventListener("click", () => {
 		state("click-enable").off();
 		gameOver.hide();
 		message.postMessage("home-menu", "sence.switchSence");
-	});;
+	});
 	return exports;
 });
-
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\layer.js
  */
 define("scripts/layer.js", function(exports) {
-	/**
-	 * layer manager
-	 */
+	// layer manager
 	var Raphael = require("scripts/lib/raphael");
 	var Ucren = require("scripts/lib/ucren");
 	var layers = {};
@@ -375,7 +359,8 @@ define("scripts/main.js", function(exports) {
 		var fruits = collide.check(knife),
 			angle;
 		if (fruits.length)
-			angle = tools.getAngleByRadian(tools.pointToRadian(knife.slice(0, 2), knife.slice(2, 4))),
+			angle = tools.getAngleByRadian(tools.pointToRadian(knife.slice(0, 2), knife.slice(2,
+				4))),
 			fruits.forEach(function(fruit) {
 				message.postMessage(fruit, angle, "slice.at");
 			});
@@ -483,13 +468,15 @@ define("scripts/sence.js", function(exports) {
 	var timeline = require("scripts/timeline");
 	var setTimeout = timeline.setTimeout.bind(timeline);
 	var setInterval = timeline.setInterval.bind(timeline);
-	var menuSnd;
-	var gameStartSnd;
+	var menuSnd, gameStartSnd;
 	// initialize sence
 	exports.init = function() {
 		menuSnd = sound.create("sound/menu");
+		// 开启循环播放
+		menuSnd.loop();
 		gameStartSnd = sound.create("sound/start");
-		[background, homeMask, logo, ninja, homeDesc, dojo, newSign, newGame, quit, score, lose, developing,
+		[background, homeMask, logo, ninja, homeDesc, dojo, newSign, newGame, quit, score, lose,
+			developing,
 			gameOver, flash, fps
 		].invoke("set");
 		setInterval(fps.update.bind(fps), 500);
@@ -566,7 +553,6 @@ define("scripts/sence.js", function(exports) {
 
 		group.invoke("show");
 		[peach, sandia].invoke("rotate", 2500);
-
 		menuSnd.play();
 		setTimeout(callback, 2500);
 	};
@@ -1126,16 +1112,19 @@ define("scripts/factory/fruit.js", function(exports) {
 		this.anims = [];
 
 		if (this.type === "boom")
-			this.flame = flame.create(this.startX - radius + 4, this.startY - radius + 5, conf.flameStart || 0);
+			this.flame = flame.create(this.startX - radius + 4, this.startY - radius + 5, conf.flameStart ||
+				0);
 	}
 
 	ClassFruit.prototype.set = function(hide) {
 		var inf = infos[this.type],
 			radius = this.radius;
 
-		this.shadow = layer.createImage("fruit", "images/shadow.png", this.startX - radius, this.startY -
+		this.shadow = layer.createImage("fruit", "images/shadow.png", this.startX - radius, this
+			.startY -
 			radius + shadowPos, 106, 77);
-		this.image = layer.createImage("fruit", inf[0], this.startX - radius, this.startY - radius, inf[1],
+		this.image = layer.createImage("fruit", inf[0], this.startX - radius, this.startY - radius, inf[
+				1],
 			inf[2]);
 
 		if (hide)
@@ -1241,7 +1230,8 @@ define("scripts/factory/fruit.js", function(exports) {
 		var inf = infos[this.type],
 			preSrc = inf[0].replace(".png", ""),
 			radius = this.radius;
-		var create = layer.createImage.saturate(layer, this.startX - radius, this.startY - radius, inf[1],
+		var create = layer.createImage.saturate(layer, this.startX - radius, this.startY - radius, inf[
+				1],
 			inf[2]);
 
 		angle = ((angle % 180) + 360 + inf[4]) % 360;
@@ -1597,7 +1587,8 @@ define("scripts/factory/rotate.js", function(exports) {
 		module.anims = [];
 
 		module.set = function() {
-			image = layer.createImage("default", imageSrc, x, y, w, h).scale(z, z).rotate(defaultAngle,
+			image = layer.createImage("default", imageSrc, x, y, w, h).scale(z, z).rotate(
+				defaultAngle,
 				true);
 		};
 
@@ -1700,7 +1691,7 @@ define("scripts/lib/buzz.js", function(exports) {
 			loop: false,
 			placeholder: '--',
 			preload: 'metadata',
-			volume: 80
+			volume: 100
 		},
 		types: {
 			'mp3': 'audio/mpeg',
@@ -2103,8 +2094,9 @@ define("scripts/lib/buzz.js", function(exports) {
 
 					for (var i = 0; i < events.length; i++) {
 						var namespace = events[i].idx.split('.');
-						if (events[i].idx == idx || (namespace[1] && namespace[1] == idx.replace(
-								'.', ''))) {
+						if (events[i].idx == idx || (namespace[1] && namespace[1] == idx
+								.replace(
+									'.', ''))) {
 							this.sound.removeEventListener(type, events[i].func, true);
 							// remove event
 							events.splice(i, 1);
@@ -2143,8 +2135,9 @@ define("scripts/lib/buzz.js", function(exports) {
 
 					for (var i = 0; i < events.length; i++) {
 						var eventType = events[i].idx.split('.');
-						if (events[i].idx == idx || (eventType[0] && eventType[0] == idx.replace(
-								'.', ''))) {
+						if (events[i].idx == idx || (eventType[0] && eventType[0] == idx
+								.replace(
+									'.', ''))) {
 							var evt = document.createEvent('HTMLEvents');
 							evt.initEvent(eventType[0], false, true);
 							this.sound.dispatchEvent(evt);
@@ -2490,8 +2483,9 @@ define("scripts/lib/buzz.js", function(exports) {
 		},
 
 		isAACSupported: function() {
-			return !!buzz.el.canPlayType && (buzz.el.canPlayType('audio/x-m4a;') || buzz.el.canPlayType(
-				'audio/aac;'));
+			return !!buzz.el.canPlayType && (buzz.el.canPlayType('audio/x-m4a;') || buzz.el
+				.canPlayType(
+					'audio/aac;'));
 		},
 
 		toTimer: function(time, withHours) {
@@ -2854,8 +2848,9 @@ define("scripts/lib/raphael.js", function(exports) {
 					j = b + 1 / 3 * -(n - 1);
 					j < 0 && j++;
 					j > 1 && j--;
-					j * 6 < 1 ? f[g[n]] = i + (h - i) * 6 * j : j * 2 < 1 ? f[g[n]] = h : j * 3 < 2 ? f[
-						g[n]] = i + (h - i) * (2 / 3 - j) * 6 : f[g[n]] = i
+					j * 6 < 1 ? f[g[n]] = i + (h - i) * 6 * j : j * 2 < 1 ? f[g[n]] = h : j * 3 <
+						2 ? f[
+							g[n]] = i + (h - i) * (2 / 3 - j) * 6 : f[g[n]] = i
 				}
 			} else f = {
 				r: d,
@@ -3229,7 +3224,8 @@ define("scripts/lib/raphael.js", function(exports) {
 								f = l[1];
 								g = l[2];
 							default:
-								for (var m = 1, n = l[w]; m < n; m++) k[m] = +(l[m] - (m % 2 ? d : e))
+								for (var m = 1, n = l[w]; m < n; m++) k[m] = +(l[m] - (m % 2 ? d :
+										e))
 									.toFixed(3)
 						}
 					} else {
@@ -3371,7 +3367,8 @@ define("scripts/lib/raphael.js", function(exports) {
 					}
 					var z = c * c,
 						A = d * d,
-						C = (f == g ? -1 : 1) * y.sqrt(B((z * A - z * u * u - A * t * t) / (z * u * u + A *
+						C = (f == g ? -1 : 1) * y.sqrt(B((z * A - z * u * u - A * t * t) / (z * u * u +
+							A *
 							t * t))),
 						E = C * c * u / d + (a + h) / 2,
 						F = C * -d * t / c + (b + i) / 2,
@@ -3411,7 +3408,8 @@ define("scripts/lib/raphael.js", function(exports) {
 					if (j) return [U, V, W][n](m);
 					m = [U, V, W][n](m)[v]()[s](",");
 					var X = [];
-					for (var Y = 0, Z = m[w]; Y < Z; Y++) X[Y] = Y % 2 ? p(m[Y - 1], m[Y], l).y : p(m[Y], m[
+					for (var Y = 0, Z = m[w]; Y < Z; Y++) X[Y] = Y % 2 ? p(m[Y - 1], m[Y], l).y : p(m[
+						Y], m[
 						Y + 1], l).x;
 					return X
 				}
@@ -3698,7 +3696,8 @@ define("scripts/lib/raphael.js", function(exports) {
 			},
 			bF = function(a) {
 				return function() {
-					throw new Error("Raphaël: you are calling to method “" + a + "” of removed object")
+					throw new Error("Raphaël: you are calling to method “" + a +
+						"” of removed object")
 				}
 			};
 		a.pathToRelative = bp;
@@ -3743,8 +3742,10 @@ define("scripts/lib/raphael.js", function(exports) {
 							e = S(b);
 							f = S(c);
 							var g = (f > 0.5) * 2 - 1;
-							C(e - 0.5, 2) + C(f - 0.5, 2) > 0.25 && (f = y.sqrt(0.25 - C(e - 0.5,
-								2)) * g + 0.5) && f != 0.5 && (f = f.toFixed(5) - 0.00001 * g)
+							C(e - 0.5, 2) + C(f - 0.5, 2) > 0.25 && (f = y.sqrt(0.25 - C(e -
+								0.5,
+								2)) * g + 0.5) && f != 0.5 && (f = f.toFixed(5) - 0.00001 *
+								g)
 						}
 						return p
 					});
@@ -3871,7 +3872,8 @@ define("scripts/lib/raphael.js", function(exports) {
 										u[l](h);
 										t = u
 									}
-									n == "target" && o == "blank" ? t.setAttributeNS(c.paper.xlink, "show",
+									n == "target" && o == "blank" ? t.setAttributeNS(c.paper.xlink,
+										"show",
 										"new") : t.setAttributeNS(c.paper.xlink, n, o);
 									break;
 								case "cursor":
@@ -3972,7 +3974,8 @@ define("scripts/lib/raphael.js", function(exports) {
 									break;
 								case "scale":
 									C = r(o)[s](b);
-									c.scale(+C[0] || 1, +C[1] || +C[0] || 1, isNaN(S(C[2])) ? null : +C[2],
+									c.scale(+C[0] || 1, +C[1] || +C[0] || 1, isNaN(S(C[2])) ? null : +C[
+											2],
 										isNaN(S(C[3])) ? null : +C[3]);
 									break;
 								case I:
@@ -4024,23 +4027,27 @@ define("scripts/lib/raphael.js", function(exports) {
 										if ((({
 												circle: 1,
 												ellipse: 1
-											})[f](c.type) || r(o).charAt() != "r") && bI(h, o, c.paper)) {
+											})[f](c.type) || r(o).charAt() != "r") && bI(h, o, c
+												.paper)) {
 											i.gradient = o;
 											i.fill = "none";
 											break
 										} else {
 											delete d.gradient;
 											delete i.gradient;
-											!a.is(i.opacity, "undefined") && a.is(d.opacity, "undefined") &&
+											!a.is(i.opacity, "undefined") && a.is(d.opacity,
+													"undefined") &&
 												bG(h, {
 													opacity: i.opacity
 												});
-											!a.is(i["fill-opacity"], "undefined") && a.is(d["fill-opacity"],
+											!a.is(i["fill-opacity"], "undefined") && a.is(d[
+													"fill-opacity"],
 												"undefined") && bG(h, {
 												"fill-opacity": i["fill-opacity"]
 											})
 										} G[f]("opacity") && bG(h, {
-										"fill-opacity": G.opacity > 1 ? G.opacity / 100 : G.opacity
+										"fill-opacity": G.opacity > 1 ? G.opacity / 100 : G
+											.opacity
 									});
 								case "stroke":
 									G = a.getRGB(o);
@@ -4062,7 +4069,8 @@ define("scripts/lib/raphael.js", function(exports) {
 									});
 								case "fill-opacity":
 									if (i.gradient) {
-										var H = g.getElementById(h.getAttribute(I)[Y](/^url\(#|\)$/g, p));
+										var H = g.getElementById(h.getAttribute(I)[Y](/^url\(#|\)$/g,
+											p));
 										if (H) {
 											var J = H.getElementsByTagName("stop");
 											J[J[w] - 1][R]("stop-opacity", o)
@@ -4243,7 +4251,8 @@ define("scripts/lib/raphael.js", function(exports) {
 					if (b == "translation") return cz.call(this);
 					if (b == "rotation") return this.rotate();
 					if (b == "scale") return this.scale();
-					if (b == I && this.attrs.fill == "none" && this.attrs.gradient) return this.attrs
+					if (b == I && this.attrs.fill == "none" && this.attrs.gradient) return this
+						.attrs
 						.gradient;
 					return this.attrs[b]
 				}
@@ -4284,7 +4293,8 @@ define("scripts/lib/raphael.js", function(exports) {
 			bN[e].insertAfter = function(a) {
 				if (this.removed) return this;
 				var b = a.node || a[a.length - 1].node;
-				b.nextSibling ? b.parentNode.insertBefore(this.node, b.nextSibling) : b.parentNode[l](
+				b.nextSibling ? b.parentNode.insertBefore(this.node, b.nextSibling) : b.parentNode[
+					l](
 					this.node);
 				bD(this, a, this.paper);
 				return this
@@ -4514,7 +4524,8 @@ define("scripts/lib/raphael.js", function(exports) {
 						f = e[h];
 						g = x.call(e[h][0]);
 						g == "z" && (g = "x");
-						for (var j = 1, k = f[w]; j < k; j++) g += Q(f[j] * b_) + (j != k - 1 ? "," : p);
+						for (var j = 1, k = f[w]; j < k; j++) g += Q(f[j] * b_) + (j != k - 1 ? "," :
+							p);
 						d[L](g)
 					}
 					return d[v](q)
@@ -4525,7 +4536,8 @@ define("scripts/lib/raphael.js", function(exports) {
 			};
 			bH = function(a, b) {
 				var c = cd("group");
-				c.style.cssText = "position:absolute;left:0;top:0;width:" + b.width + "px;height:" + b
+				c.style.cssText = "position:absolute;left:0;top:0;width:" + b.width + "px;height:" +
+					b
 					.height + "px";
 				c.coordsize = b.coordsize;
 				c.coordorigin = b.coordorigin;
@@ -4554,7 +4566,8 @@ define("scripts/lib/raphael.js", function(exports) {
 				var e = c.node,
 					h = c.attrs,
 					i = e.style,
-					j, k = (d.x != h.x || d.y != h.y || d.width != h.width || d.height != h.height || d
+					j, k = (d.x != h.x || d.y != h.y || d.width != h.width || d.height != h
+						.height || d
 						.r != h.r) && c.type == "rect",
 					m = c;
 				for (var n in d) d[f](n) && (h[n] = d[n]);
@@ -4628,8 +4641,9 @@ define("scripts/lib/raphael.js", function(exports) {
 						x = false;
 					!v && (x = v = cd(I));
 					if ("fill-opacity" in d || "opacity" in d) {
-						var y = ((+h["fill-opacity"] + 1 || 2) - 1) * ((+h.opacity + 1 || 2) - 1) * ((+a
-							.getRGB(d.fill).o + 1 || 2) - 1);
+						var y = ((+h["fill-opacity"] + 1 || 2) - 1) * ((+h.opacity + 1 || 2) - 1) *
+							((+a
+								.getRGB(d.fill).o + 1 || 2) - 1);
 						y = A(z(y, 0), 1);
 						v.opacity = y
 					}
@@ -4657,14 +4671,17 @@ define("scripts/lib/raphael.js", function(exports) {
 					var C = e.getElementsByTagName("stroke") && e.getElementsByTagName("stroke")[0],
 						D = false;
 					!C && (D = C = cd("stroke"));
-					if (d.stroke && d.stroke != "none" || d["stroke-width"] || d["stroke-opacity"] !=
+					if (d.stroke && d.stroke != "none" || d["stroke-width"] || d[
+							"stroke-opacity"] !=
 						null || d["stroke-dasharray"] || d["stroke-miterlimit"] || d[
 							"stroke-linejoin"] || d["stroke-linecap"]) C.on = true;
-					(d.stroke == "none" || C.on == null || d.stroke == 0 || d["stroke-width"] == 0) && (
+					(d.stroke == "none" || C.on == null || d.stroke == 0 || d["stroke-width"] ==
+						0) && (
 						C.on = false);
 					var E = a.getRGB(d.stroke);
 					C.on && d.stroke && (C.color = E.hex);
-					y = ((+h["stroke-opacity"] + 1 || 2) - 1) * ((+h.opacity + 1 || 2) - 1) * ((+E.o +
+					y = ((+h["stroke-opacity"] + 1 || 2) - 1) * ((+h.opacity + 1 || 2) - 1) * ((+E
+						.o +
 						1 || 2) - 1);
 					var F = (S(d["stroke-width"]) || 1) * 0.75;
 					y = A(z(y, 0), 1);
@@ -4700,8 +4717,9 @@ define("scripts/lib/raphael.js", function(exports) {
 					h["font-size"] && (i.fontSize = h["font-size"]);
 					h["font-weight"] && (i.fontWeight = h["font-weight"]);
 					h["font-style"] && (i.fontStyle = h["font-style"]);
-					m.node.string && (m.paper.span.innerHTML = r(m.node.string)[Y](/</g, "&#60;")[Y](
-						/&/g, "&#38;")[Y](/\n/g, "<br>"));
+					m.node.string && (m.paper.span.innerHTML = r(m.node.string)[Y](/</g, "&#60;")[Y]
+						(
+							/&/g, "&#38;")[Y](/\n/g, "<br>"));
 					m.W = h.w = m.paper.span.offsetWidth;
 					m.H = h.h = m.paper.span.offsetHeight;
 					m.X = h.x;
@@ -4732,7 +4750,8 @@ define("scripts/lib/raphael.js", function(exports) {
 					if (b && c) {
 						b = S(b);
 						c = S(c);
-						C(b - 0.5, 2) + C(c - 0.5, 2) > 0.25 && (c = y.sqrt(0.25 - C(b - 0.5,
+						C(b - 0.5, 2) + C(c - 0.5, 2) > 0.25 && (c = y.sqrt(0.25 - C(b -
+							0.5,
 							2)) * ((c > 0.5) * 2 - 1) + 0.5);
 						f = b + q + c
 					}
@@ -4849,7 +4868,8 @@ define("scripts/lib/raphael.js", function(exports) {
 						l = h.height || 0;
 						break;
 					case "text":
-						this.textpath.v = ["m", Q(h.x), ", ", Q(h.y - 2), "l", Q(h.x) + 1, ", ", Q(h.y -
+						this.textpath.v = ["m", Q(h.x), ", ", Q(h.y - 2), "l", Q(h.x) + 1, ", ", Q(h
+							.y -
 							2)][v](p);
 						i = h.x - Q(this.W / 2);
 						j = h.y - this.H / 2;
@@ -4945,7 +4965,8 @@ define("scripts/lib/raphael.js", function(exports) {
 					if (b == "translation") return cz.call(this);
 					if (b == "rotation") return this.rotate();
 					if (b == "scale") return this.scale();
-					if (b == I && this.attrs.fill == "none" && this.attrs.gradient) return this.attrs
+					if (b == I && this.attrs.fill == "none" && this.attrs.gradient) return this
+						.attrs
 						.gradient;
 					return this.attrs[b]
 				}
@@ -4985,7 +5006,8 @@ define("scripts/lib/raphael.js", function(exports) {
 			bO.toBack = function() {
 				if (this.removed) return this;
 				if (this.Group.parentNode.firstChild != this.Group) {
-					this.Group.parentNode.insertBefore(this.Group, this.Group.parentNode.firstChild);
+					this.Group.parentNode.insertBefore(this.Group, this.Group.parentNode
+						.firstChild);
 					bC(this, this.paper)
 				}
 				return this
@@ -4993,7 +5015,8 @@ define("scripts/lib/raphael.js", function(exports) {
 			bO.insertAfter = function(a) {
 				if (this.removed) return this;
 				a.constructor == cC && (a = a[a.length - 1]);
-				a.Group.nextSibling ? a.Group.parentNode.insertBefore(this.Group, a.Group.nextSibling) :
+				a.Group.nextSibling ? a.Group.parentNode.insertBefore(this.Group, a.Group
+						.nextSibling) :
 					a.Group.parentNode[l](this.Group);
 				bD(this, a, this.paper);
 				return this
@@ -5023,7 +5046,8 @@ define("scripts/lib/raphael.js", function(exports) {
 				var e = cd("group"),
 					f = cd("oval"),
 					g = f.style;
-				e.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a
+				e.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" +
+					a
 					.height + "px";
 				e.coordsize = b$;
 				e.coordorigin = a.coordorigin;
@@ -5070,7 +5094,8 @@ define("scripts/lib/raphael.js", function(exports) {
 				var f = cd("group"),
 					g = cd("oval"),
 					h = g.style;
-				f.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a
+				f.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" +
+					a
 					.height + "px";
 				f.coordsize = b$;
 				f.coordorigin = a.coordorigin;
@@ -5096,7 +5121,8 @@ define("scripts/lib/raphael.js", function(exports) {
 			bS = function(a, b, c, d, e, f) {
 				var g = cd("group"),
 					h = cd("image");
-				g.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" + a
+				g.style.cssText = "position:absolute;left:0;top:0;width:" + a.width + "px;height:" +
+					a
 					.height + "px";
 				g.coordsize = b$;
 				g.coordorigin = a.coordorigin;
@@ -5125,7 +5151,8 @@ define("scripts/lib/raphael.js", function(exports) {
 					i = cd("path"),
 					j = i.style,
 					k = cd("textpath");
-				f.style.cssText = "position:absolute;left:0;top:0;width:" + b.width + "px;height:" + b
+				f.style.cssText = "position:absolute;left:0;top:0;width:" + b.width + "px;height:" +
+					b
 					.height + "px";
 				f.coordsize = b$;
 				f.coordorigin = b.coordorigin;
@@ -5230,7 +5257,8 @@ define("scripts/lib/raphael.js", function(exports) {
 			}
 		}
 		var ce = navigator.userAgent.match(/Version\\x2f(.*?)\s/);
-		navigator.vendor == "Apple Computer, Inc." && (ce && ce[1] < 4 || navigator.platform.slice(0, 2) ==
+		navigator.vendor == "Apple Computer, Inc." && (ce && ce[1] < 4 || navigator.platform.slice(0,
+				2) ==
 			"iP") ? k.safari = function() {
 			var a = this.rect(-99, -99, this.width + 99, this.height + 99).attr({
 				stroke: "none"
@@ -5316,7 +5344,8 @@ define("scripts/lib/raphael.js", function(exports) {
 					} else a.preventDefault();
 					b += e;
 					c += d;
-					f.move && f.move.call(f.move_scope || f.el, b - f.el._drag.x, c - f.el._drag.y, b, c, a)
+					f.move && f.move.call(f.move_scope || f.el, b - f.el._drag.x, c - f.el._drag.y, b,
+						c, a)
 				}
 			},
 			cm = function(b) {
@@ -5384,7 +5413,8 @@ define("scripts/lib/raphael.js", function(exports) {
 		};
 		bO.undrag = function(b, c, d) {
 			var e = ck.length;
-			while (e--) ck[e].el == this && (ck[e].move == b && ck[e].end == d) && ck.splice(e++, 1);
+			while (e--) ck[e].el == this && (ck[e].move == b && ck[e].end == d) && ck.splice(e++,
+				1);
 			!ck.length && a.unmousemove(cl).unmouseup(cm)
 		};
 		k.circle = function(a, b, c) {
@@ -5530,7 +5560,8 @@ define("scripts/lib/raphael.js", function(exports) {
 						i.fx = t - 1;
 						i.fy = u - 1
 					} else {
-						this.node.filterMatrix = U + ".Matrix(M11=" [n](t, ", M12=0, M21=0, M22=", u,
+						this.node.filterMatrix = U + ".Matrix(M11=" [n](t, ", M12=0, M21=0, M22=",
+							u,
 							", Dx=0, Dy=0, sizingmethod='auto expand', filtertype='bilinear')");
 						z.filter = (this.node.filterMatrix || p) + (this.node.filterOpacity || p)
 					}
@@ -5605,8 +5636,10 @@ define("scripts/lib/raphael.js", function(exports) {
 									k += ["C", m.start.x, m.start.y, m.m.x, m.m.y, m.x, m.y];
 									if (f) return k;
 									l.start = k;
-									k = ["M", m.x, m.y + "C", m.n.x, m.n.y, m.end.x, m.end.y, i[5], i[
-										6]][v]();
+									k = ["M", m.x, m.y + "C", m.n.x, m.n.y, m.end.x, m.end.y, i[5],
+										i[
+											6]
+									][v]();
 									n += j;
 									g = +i[5];
 									h = +i[6];
@@ -5628,7 +5661,8 @@ define("scripts/lib/raphael.js", function(exports) {
 						k += i
 					}
 					l.end = k;
-					m = b ? n : c ? l : a.findDotsAtSegment(g, h, i[1], i[2], i[3], i[4], i[5], i[6],
+					m = b ? n : c ? l : a.findDotsAtSegment(g, h, i[1], i[2], i[3], i[4], i[5], i[
+							6],
 						1);
 					m.alpha && (m = {
 						x: m.x,
@@ -5740,14 +5774,17 @@ define("scripts/lib/raphael.js", function(exports) {
 										o = +i[s] + r * g * j[s];
 										break;
 									case "colour":
-										o = "rgb(" + [cy(Q(i[s].r + r * g * j[s].r)), cy(Q(i[s].g + r * g *
+										o = "rgb(" + [cy(Q(i[s].r + r * g * j[s].r)), cy(Q(i[s].g + r *
+											g *
 											j[s].g)), cy(Q(i[s].b + r * g * j[s].b))][v](",") + ")";
 										break;
 									case "path":
 										o = [];
 										for (var u = 0, x = i[s][w]; u < x; u++) {
 											o[u] = [i[s][u][0]];
-											for (var y = 1, z = i[s][u][w]; y < z; y++) o[u][y] = +i[s][u][
+											for (var y = 1, z = i[s][u][w]; y < z; y++) o[u][y] = +i[s][
+												u
+											][
 												y
 											] + r * g * j[s][u][y];
 											o[u] = o[u][v](q)
@@ -5768,7 +5805,8 @@ define("scripts/lib/raphael.js", function(exports) {
 												i[s][1] && (o += "," + i[s][1] + "," + i[s][2]);
 												break;
 											case "scale":
-												o = [+i[s][0] + r * g * j[s][0], +i[s][1] + r * g * j[s][1],
+												o = [+i[s][0] + r * g * j[s][0], +i[s][1] + r * g * j[s]
+													[1],
 													2 in k[s] ? k[s][2] : p, 3 in k[s] ? k[s][3] : p
 												][v](q);
 												break;
@@ -5849,7 +5887,8 @@ define("scripts/lib/raphael.js", function(exports) {
 				return this
 			};
 		bO.animateWith = function(a, b, c, d, e) {
-			for (var f = 0, g = cv.length; f < g; f++) cv[f].el.id == a.id && (b.start = cv[f].start);
+			for (var f = 0, g = cv.length; f < g; f++) cv[f].el.id == a.id && (b.start = cv[f]
+				.start);
 			return this.animate(b, c, d, e)
 		};
 		bO.animateAlong = cA();
@@ -5965,7 +6004,9 @@ define("scripts/lib/raphael.js", function(exports) {
 								l[m] = [];
 								for (var v = 0, x = i[m][w]; v < x; v++) {
 									l[m][v] = [0];
-									for (var y = 1, z = i[m][v][w]; y < z; y++) l[m][v][y] = (u[v][y] -
+									for (var y = 1, z = i[m][v][w]; y < z; y++) l[m][v][y] = (u[v][
+											y
+										] -
 										i[m][v][y]) / d
 								}
 								break;
@@ -6051,8 +6092,9 @@ define("scripts/lib/raphael.js", function(exports) {
 					key: 0,
 					value: h.attrs
 				});
-				for (v = 0, x = C[w]; v < x; v++) cx(C[v].value, h, d / 100 * C[v].key, d / 100 * (C[v -
-					1] && C[v - 1].key || 0), C[v - 1] && C[v - 1].value.callback);
+				for (v = 0, x = C[w]; v < x; v++) cx(C[v].value, h, d / 100 * C[v].key, d / 100 * (
+					C[v -
+						1] && C[v - 1].key || 0), C[v - 1] && C[v - 1].value.callback);
 				D = C[C[w] - 1].value.callback;
 				D && h.timeouts.push(setTimeout(function() {
 					D.call(h)
@@ -6131,7 +6173,8 @@ define("scripts/lib/raphael.js", function(exports) {
 			});
 			d = a.is(d, F) ? d : j;
 			h = this.items[--g].animate(b, c, d, j);
-			while (g--) this.items[g] && !this.items[g].removed && this.items[g].animateWith(h, b, c, d,
+			while (g--) this.items[g] && !this.items[g].removed && this.items[g].animateWith(h, b,
+				c, d,
 				j);
 			return this
 		};
@@ -6245,7 +6288,8 @@ define("scripts/lib/raphael.js", function(exports) {
 				n = (g || 16) / f.face["units-per-em"];
 				var o = f.face.bbox.split(b),
 					q = +o[0],
-					t = +o[1] + (h == "baseline" ? o[3] - o[1] + +f.face.descent : (o[3] - o[1]) / 2);
+					t = +o[1] + (h == "baseline" ? o[3] - o[1] + +f.face.descent : (o[3] - o[1]) /
+						2);
 				for (var u = 0, v = k[w]; u < v; u++) {
 					var x = u && f.glyphs[k[u - 1]] || {},
 						y = f.glyphs[k[u]];
@@ -6287,20 +6331,15 @@ define("scripts/lib/raphael.js", function(exports) {
 define("scripts/lib/sound.js", function(exports) {
 	/**
 	 * 简易声效控制
-	 */
-
-	/**
+	 * 
 	 * 使用方法：
-	 * 
-	 * var sound = require("scripts/lib/sound/main");
-	 * 
-	 * var snd = sound.create("sounds/myfile");
+	 * const sound = require("scripts/lib/sound/main");
+	 * const snd = sound.create("sounds/myfile");
 	 * snd.play();
 	 */
+	const buzz = require("scripts/lib/buzz");
 
-	var buzz = require("scripts/lib/buzz");
-
-	function ClassBuzz(src) {
+	function Sound(src) {
 		this.sound = new buzz.sound(src, {
 			formats: ["ogg", "mp3"],
 			preload: true,
@@ -6308,26 +6347,20 @@ define("scripts/lib/sound.js", function(exports) {
 			loop: false
 		});
 	}
-
-	ClassBuzz.prototype.play = function() {
-		this.sound.setPercent(0);
-		this.sound.setVolume(100);
-		this.sound.play();
+	Sound.prototype.play = function() {
+		this.sound.setPercent(0).setVolume(100).play();
 	};
-
-	ClassBuzz.prototype.stop = function() {
-		this.sound.fadeOut(1e3, function() {
-			this.pause();
-		});
+	Sound.prototype.stop = function() {
+		this.sound.fadeOut(1000, () => this.sound.pause());
 	};
-
+	Sound.prototype.loop = function() {
+		this.sound.loop();
+	};
 	exports.create = function(src) {
-		return new ClassBuzz(src);
+		return new Sound(src);
 	};
-
 	return exports;
 });
-
 
 /**
  * @source D:\hosting\demos\fruit-ninja\output\scripts\lib\tween.js
@@ -6335,7 +6368,8 @@ define("scripts/lib/sound.js", function(exports) {
 define("scripts/lib/tween.js", function(exports) {
 	exports.exponential = function() {};
 	exports.exponential.co = function(index, offset, target, framesNum) {
-		return (index == framesNum) ? offset + target : target * (-Math.pow(2, -10 * index / framesNum) +
+		return (index == framesNum) ? offset + target : target * (-Math.pow(2, -10 * index /
+				framesNum) +
 			1) + offset;
 	};
 	// exports.exponential.ci = function(index, offset, target, framesNum){ return (index == 0) ? offset : target * Math.pow(2, 10 * (index / framesNum - 1)) + offset; }
@@ -6345,7 +6379,8 @@ define("scripts/lib/tween.js", function(exports) {
 		if ((index /= framesNum) < (1 / 2.75)) return target * (7.5625 * index * index) + offset;
 		else if (index < (2 / 2.75)) return target * (7.5625 * (index -= (1.5 / 2.75)) * index + .75) +
 			offset;
-		else if (index < (2.5 / 2.75)) return target * (7.5625 * (index -= (2.25 / 2.75)) * index + .9375) +
+		else if (index < (2.5 / 2.75)) return target * (7.5625 * (index -= (2.25 / 2.75)) * index +
+				.9375) +
 			offset;
 		else return target * (7.5625 * (index -= (2.625 / 2.75)) * index + .984375) + offset;
 	};
@@ -6363,7 +6398,8 @@ define("scripts/lib/tween.js", function(exports) {
 	};
 
 	exports.circular = function(index, offset, target, framesNum) {
-		if ((index /= framesNum / 2) < 1) return -target / 2 * (Math.sqrt(1 - index * index) - 1) + offset;
+		if ((index /= framesNum / 2) < 1) return -target / 2 * (Math.sqrt(1 - index * index) - 1) +
+			offset;
 		else return target / 2 * (Math.sqrt(1 - (index -= 2) * index) + 1) + offset;
 	}
 
@@ -6697,7 +6733,8 @@ define("scripts/lib/ucren.js", function(exports) {
 							var args, rtn;
 							args = slice.call(arguments, 0);
 							if (befores &&
-								befores.apply(this, [name].concat(args)) === false) {
+								befores.apply(this, [name].concat(args)) === false
+							) {
 								return;
 							}
 							this.fireEvent("before" + name, args);
@@ -7518,7 +7555,8 @@ define("scripts/lib/ucren.js", function(exports) {
 				}
 
 				while (parentNode && parentNode.tagName.toUpperCase() != "BODY" &&
-					parentNode.tagName.toUpperCase() != "HTML") { // account for any scrolled ancestors
+					parentNode.tagName.toUpperCase() != "HTML"
+				) { // account for any scrolled ancestors
 					pos.x -= parentNode.scrollLeft;
 					pos.y -= parentNode.scrollTop;
 					if (parentNode.parentNode) {
@@ -7771,8 +7809,9 @@ define("scripts/object/developing.js", function(exports) {
 	exports.anims = [];
 
 	exports.set = function() {
-		this.image = layer.createImage("default", "images/developing.png", 103, 218, 429, 53).hide().scale(
-			1e-5, 1e-5);
+		this.image = layer.createImage("default", "images/developing.png", 103, 218, 429, 53).hide()
+			.scale(
+				1e-5, 1e-5);
 	};
 
 	exports.show = function(start) {
@@ -7916,9 +7955,11 @@ define("scripts/object/flame.js", function(exports) {
 		center = [trunc(ic[0] + cos(ia) * il * (1 - age)), trunc(ic[1] + sin(ia) * il * (1 - age))];
 		p1 = [trunc(center[0] - cos(ia) * radius * age), trunc(center[1] - sin(ia) * radius * age)];
 		p2 = [trunc(center[0] + cos(ia) * radius * age), trunc(center[1] + sin(ia) * radius * age)];
-		p3 = [trunc(center[0] - cos(ia + .5 * PI) * radius * .4 * age), trunc(center[1] - sin(ia + .5 * PI) *
+		p3 = [trunc(center[0] - cos(ia + .5 * PI) * radius * .4 * age), trunc(center[1] - sin(ia + .5 *
+				PI) *
 			radius * .4 * age)];
-		p4 = [trunc(center[0] - cos(ia - .5 * PI) * radius * .4 * age), trunc(center[1] - sin(ia - .5 * PI) *
+		p4 = [trunc(center[0] - cos(ia - .5 * PI) * radius * .4 * age), trunc(center[1] - sin(ia - .5 *
+				PI) *
 			radius * .4 * age)];
 
 		item.path.attr({
@@ -8092,8 +8133,9 @@ define("scripts/object/game-over.js", function(exports) {
 	exports.anims = [];
 
 	exports.set = function() {
-		this.image = layer.createImage("default", "images/game-over.png", 75, 198, 490, 85).hide().scale(
-			1e-5, 1e-5);
+		this.image = layer.createImage("default", "images/game-over.png", 75, 198, 490, 85).hide()
+			.scale(
+				1e-5, 1e-5);
 	};
 
 	exports.show = function(start) {
@@ -8165,7 +8207,8 @@ define("scripts/object/home-mask.js", function(exports) {
 	var displacement = require("scripts/factory/displacement");
 	var tween = require("scripts/lib/tween");
 
-	exports = displacement.create("images/home-mask.png", 640, 183, 0, -183, 0, 0, tween.exponential.co, 1e3);;
+	exports = displacement.create("images/home-mask.png", 640, 183, 0, -183, 0, 0, tween.exponential.co,
+		1e3);;
 
 	return exports;
 });
