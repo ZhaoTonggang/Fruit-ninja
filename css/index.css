@@ -13,18 +13,17 @@ body {
 
 #extra {
 	position: fixed;
+	left: 50%;
+	top: 50%;
 	width: 660px;
 	height: 500px;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
-	margin: auto;
+	margin-top: -250px;
+	margin-left: -330px;
 	text-align: left;
 	background: #794621;
 	border: 10px ridge #794621;
 	box-shadow: 0 0 100px 10px #794621;
-	border-radius: 20px;
+	border-radius: 10px;
 	cursor: url('../images/cursor.png'), auto;
 	z-index: 999999;
 }
