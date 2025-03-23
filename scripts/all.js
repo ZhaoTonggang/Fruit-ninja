@@ -6,8 +6,9 @@
  */
 void
 	(function(global) {
-		const mapping = {}; // 存储模块定义
-		const cache = {}; // 缓存已加载的模块
+		// 存储模块定义合缓存已加载的模块
+		const mapping = {},
+			cache = {};
 		// 启动指定模块
 		global.startModule = function(moduleId) {
 			require(moduleId).start();
@@ -137,9 +138,7 @@ define("scripts/control.js", function(exports) {
 		});
 		dragger.on("returnValue", (dx, dy, x, y, kf) => {
 			// 考虑缩放比例，修正坐标
-			const adjustedX = (x - canvasLeft) / bili;
-			const adjustedY = (y - canvasTop) / bili;
-			if (kf = knife.through(adjustedX, adjustedY)) {
+			if (kf = knife.through((x - canvasLeft) / bili, (y - canvasTop) / bili)) {
 				message.postMessage(kf, "slice");
 			}
 		});
