@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fruit-ninja-v1',
+const CACHE_NAME = 'fruit-ninja-v2',
 	ASSETS_TO_CACHE = [
 		'./',
 		'./index.html',
@@ -104,9 +104,7 @@ self.addEventListener('activate', event => {
 });
 // 消息处理来自客户端的消息
 self.addEventListener('message', event => {
-	if (event.data === 'SKIP_WAITING') {
-		self.skipWaiting();
-	}
+	if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 // 网络请求拦截 - 缓存优先策略（同时更新策略）
 self.addEventListener('fetch', event => {
@@ -115,36 +113,6 @@ self.addEventListener('fetch', event => {
 	event.respondWith(
 		caches.match(event.request)
 		.then(cachedResponse => {
-			// 先返回缓存，同时在后台更新资源
-			const fetchPromise = fetch(event.request)
-				.then(response => {
-					if (!response || response.status !== 200 || response.type !== 'basic') {
-						return response;
-					}
-					const responseToCache = response.clone();
-					caches.open(CACHE_NAME)
-						.then(cache => {
-							cache.put(event.request, responseToCache);
-						});
-					return response;
-				})
-				.catch(error => {
-					console.log('❌ 请求失败:', error);
-					// 如果是HTML请求，返回首页
-					if (isHTML) {
-						console.log('📴 离线模式');
-						self.clients.matchAll().then(clients => {
-							clients.forEach(client => {
-								client.postMessage({
-									type: 'CACHE_STATUS',
-									status: 'OFFLINE',
-									version: CACHE_NAME
-								});
-							});
-						});
-						return caches.match('./');
-					}
-				});
 			if (cachedResponse) {
 				if (isHTML) {
 					console.log('✅ 缓存命中:', event.request.url);
@@ -164,7 +132,42 @@ self.addEventListener('fetch', event => {
 				}
 				return cachedResponse;
 			}
-			return fetchPromise;
+			// 缓存中没有，从网络获取
+			return fetch(event.request)
+				.then(response => {
+					if (!response || response.status !== 200 || response.type !== 'basic')
+						return response;
+					const responseToCache = response.clone();
+					caches.open(CACHE_NAME)
+						.then(cache => {
+							cache.put(event.request, responseToCache);
+						});
+					return response;
+				})
+				.catch(error => {
+					console.log('❌ 请求失败:', error);
+					// 如果是HTML请求，返回首页缓存
+					if (isHTML) {
+						console.log('📴 离线模式');
+						self.clients.matchAll().then(clients => {
+							clients.forEach(client => {
+								client.postMessage({
+									type: 'CACHE_STATUS',
+									status: 'OFFLINE',
+									version: CACHE_NAME
+								});
+							});
+						});
+						return caches.match('./').then(cachedResponse => {
+							return cachedResponse || new Response('Offline', {
+								status: 503
+							});
+						});
+					}
+					return new Response('Network error', {
+						status: 503
+					});
+				});
 		})
 	);
 });
