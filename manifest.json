@@ -1,0 +1,43 @@
+{
+  "name": "水果忍者网页版",
+  "short_name": "水果忍者",
+  "description": "水果忍者的网页版本，支持游戏手柄！",
+  "version": "2.0.0",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#794621",
+  "theme_color": "#794621",
+  "orientation": "landscape",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "./favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "./images/logo.png",
+      "sizes": "240x79",
+      "type": "image/png"
+    },
+    {
+      "src": "./sgrz.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "经典模式",
+      "description": "立即开始经典水果忍者模式",
+      "url": "./?mode=classic",
+      "icons": [{"src": "./sgrz.png", "sizes": "512x512"}]
+    },
+    {
+      "name": "道场模式",
+      "description": "挑战限时道场模式",
+      "url": "./?mode=dojo",
+      "icons": [{"src": "./sgrz.png", "sizes": "512x512"}]
+    }
+  ]
+}

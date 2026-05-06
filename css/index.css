@@ -59,3 +59,44 @@ body {
 	color: #fff;
 	font-weight: 700;
 }
+
+/* 缓存状态 */
+@keyframes fadeInOut {
+	0% {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+
+	20% {
+		opacity: 1;
+		transform: translateX(0);
+	}
+
+	80% {
+		opacity: 1;
+		transform: translateX(0);
+	}
+
+	100% {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+}
+
+#Status {
+	position: fixed;
+	top: 10px;
+	right: 10px;
+	color: white;
+	padding: 8px;
+	border-radius: 4px;
+	font-family: Arial, sans-serif;
+	font-size: 16px;
+	z-index: 2147483647;
+	animation: fadeInOut 4s ease-out forwards;
+}
+
+/* googleAD未载入 */
+ins.adsbygoogle[data-ad-status="unfilled"] {
+	display: none !important;
+}

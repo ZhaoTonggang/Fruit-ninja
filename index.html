@@ -1,21 +1,30 @@
 <!DOCTYPE html>
-<html lang="zh-CN" onselectstart="return false" oncontextmenu="return false">
+<html lang="zh-CN">
 	<head>
 		<title>水果忍者网页版 - 畅玩精品在线页游</title>
 		<meta charset="utf-8">
-		<meta name="description" content="水果忍者的网页版本" />
-		<meta name="keywords" content="水果忍者,Fruit Ninja,网页游戏,H5游戏" />
+		<meta name="description" content="水果忍者的网页版本，支持游戏手柄！" />
+		<meta name="keywords" content="水果忍者,Fruit Ninja,网页游戏,H5游戏,PWA" />
 		<meta name="author" content="赵彤刚" />
 		<meta name="viewport"
 			content="width=device-width, height=device-height, user-scalable=no, initial-scale=1.0, maximum-scale=1.0" />
+		<!-- PWA Meta Tags -->
 		<meta name="mobile-web-app-capable" content="yes" />
-		<meta name="mobile-web-app-status-bar-style" content="#794621" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="水果忍者" />
+		<meta name="mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 		<meta name="theme-color" content="#794621" />
+		<meta name="msapplication-TileColor" content="#794621" />
+		<link rel="manifest" href="./manifest.json" />
 		<link rel="shortcut icon" href="./favicon.ico" />
 		<link rel="icon" href="./favicon.ico" />
+		<link rel="apple-touch-icon" href="./sgrz.png" />
+		<link rel="apple-touch-startup-image" href="./sgrz.png" />
 		<link rel="stylesheet" href="./css/index.css" />
 	</head>
 	<body>
+		<div id="Status"></div>
 		<div id="extra"></div>
 		<div id="browser"></div>
 		<script async src="./scripts/all.js"></script>
