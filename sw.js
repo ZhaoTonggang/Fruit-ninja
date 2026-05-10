@@ -1,5 +1,5 @@
 // 版本
-const Ver = '1778418253';
+const Ver = '1778421403';
 // 安装：缓存资源 + 立即激活
 self.addEventListener('install', e => {
 	e.waitUntil((async () => {
@@ -60,7 +60,6 @@ self.addEventListener('install', e => {
 			'./images/xxxf.png',
 			'./index.html',
 			'./manifest.json',
-			'./package.json',
 			'./scripts/all.js',
 			'./sound/boom.mp3',
 			'./sound/boom.ogg',
