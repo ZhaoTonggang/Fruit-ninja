@@ -25,12 +25,10 @@ body {
 	box-shadow: 0 0 100px 10px #794621;
 	border-radius: 10px;
 	cursor: url('../images/cursor.png'), auto;
-	z-index: 999999;
 }
 
 #extra .layer {
 	position: absolute;
-	z-index: 10;
 }
 
 #desc {
@@ -92,7 +90,7 @@ body {
 	border-radius: 4px;
 	font-family: Arial, sans-serif;
 	font-size: 18px;
-	z-index: 2147483647;
+	z-index: 99;
 	animation: fadeInOut 4s ease-out forwards;
 }
 

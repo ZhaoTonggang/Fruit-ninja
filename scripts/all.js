@@ -679,9 +679,7 @@ define("scripts/dojo.js", (exports) => {
 	};
 	exports.start = () => {
 		// 清理之前的定时器
-		if (enableClickTimeout) {
-			enableClickTimeout = null;
-		}
+		if (enableClickTimeout) enableClickTimeout = null;
 		throwSnd = sound.create("sound/throw");
 		gameOverSnd = sound.create("sound/over");
 		s = 0;
@@ -2023,14 +2021,27 @@ define("scripts/lib/buzz.js", function(exports) {
 						// 只处理自动播放策略错误
 						if (e.name === 'NotAllowedError') {
 							this._clickListenerAdded = true;
-							document.addEventListener('click', () => {
+							// 触发锁：确保只执行一次
+							let isTriggered = false;
+							// 统一触发函数
+							const playAudio = () => {
+								// 已触发则直接退出
+								if (isTriggered) return;
+								isTriggered = true;
 								this._clickListenerAdded = false;
 								this.sound.play().catch(console.error);
-							}, {
+								// 触发后立即移除两个事件
+								document.removeEventListener('click', playAudio);
+								document.removeEventListener('touchstart', playAudio);
+							};
+							// 绑定事件
+							document.addEventListener('click', playAudio, {
+								once: true
+							});
+							document.addEventListener('touchstart', playAudio, {
 								once: true
 							});
 						} else {
-							// 其他错误正常抛出或处理
 							console.error('音频播放失败:', e);
 						}
 					});
@@ -2048,9 +2059,7 @@ define("scripts/lib/buzz.js", function(exports) {
 				return this;
 			};
 			this.pause = function() {
-				if (supported) {
-					this.sound.pause();
-				}
+				if (supported) this.sound.pause();
 				return this;
 			};
 			this.isPaused = function() {
@@ -2086,15 +2095,11 @@ define("scripts/lib/buzz.js", function(exports) {
 				return this;
 			};
 			this.mute = function() {
-				if (supported) {
-					this.sound.muted = true;
-				}
+				if (supported) this.sound.muted = true;
 				return this;
 			};
 			this.unmute = function() {
-				if (supported) {
-					this.sound.muted = false;
-				}
+				if (supported) this.sound.muted = false;
 				return this;
 			};
 			this.toggleMute = function() {
@@ -7890,16 +7895,13 @@ define("scripts/object/flash.js", function(exports) {
 /**
  * fps
  */
-define("scripts/object/fps.js", function(exports) {
-	var layer = require("scripts/layer");
-	var timeline = require("scripts/timeline");
-	var text, fps = "fps: ";
-	exports.set = function() {
-		text = layer.createText("default", fps + "0", 10, 460).attr("fill", "#ccc");
-	};
-	exports.update = function() {
-		text.attr("text", fps + (timeline.getFPS() >> 0));
-	};
+define("scripts/object/fps.js", (exports) => {
+	const layer = require("scripts/layer"),
+		timeline = require("scripts/timeline"),
+		f = "FPS:";
+	let text;
+	exports.set = () => text = layer.createText("default", f + "0", 10, 460).attr("fill", "#fff");
+	exports.update = () => text.attr("text", f + (timeline.getFPS() >> 0));
 	return exports;
 });
 /**
@@ -8618,8 +8620,13 @@ if ('mediaSession' in navigator) {
 		console.log('❌ Service Worker 注册失败:', error);
 	}
 })();
-// 初次点击触发全屏
-document.addEventListener('click', () => {
+// 触发锁：确保点击/触摸只执行一次
+let isFullscreen = false;
+// 统一的全屏处理函数
+const Fullscreen = () => {
+	// 已触发则直接退出
+	if (isFullscreen) return;
+	isFullscreen = true;
 	const htmlel = document.documentElement;
 	if (htmlel.requestFullscreen) {
 		htmlel.requestFullscreen();
@@ -8628,11 +8635,19 @@ document.addEventListener('click', () => {
 	} else if (htmlel.webkitRequestFullscreen) {
 		htmlel.webkitRequestFullscreen();
 	} else if (htmlel.msRequestFullscreen) {
-		htnlel.msRequestFullscreen();
+		htmlel.msRequestFullscreen();
 	} else {
 		console.warn('浏览器不支持全屏模式');
 	}
-}, {
+	// 触发后立即移除两个事件，彻底防止重复执行
+	document.removeEventListener('click', Fullscreen);
+	document.removeEventListener('touchstart', Fullscreen);
+};
+// 同时绑定点击和触摸事件
+document.addEventListener('click', Fullscreen, {
+	once: true
+});
+document.addEventListener('touchstart', Fullscreen, {
 	once: true
 });
 // 页面关闭提示

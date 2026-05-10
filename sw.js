@@ -1,5 +1,5 @@
 // 版本
-const Ver = '1778421614';
+const Ver = '1778438663';
 // 安装：缓存资源 + 立即激活
 self.addEventListener('install', e => {
 	e.waitUntil((async () => {
@@ -41,7 +41,12 @@ self.addEventListener('install', e => {
 			'./images/icons/512.png',
 			'./images/icons/72.png',
 			'./images/icons/96.png',
+			'./images/icons/apple-1024.png',
+			'./images/icons/apple-144.png',
 			'./images/icons/apple-180.png',
+			'./images/icons/apple-192.png',
+			'./images/icons/apple-512.png',
+			'./images/icons/apple-72.png',
 			'./images/logo.png',
 			'./images/lose.png',
 			'./images/new-game.png',
