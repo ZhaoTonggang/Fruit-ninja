@@ -1,179 +1,195 @@
-const CACHE_NAME = 'fruit-ninja-v2',
-	ASSETS_TO_CACHE = [
-		'./',
-		'./index.html',
-		'./404.html',
-		'./manifest.json',
-		'./css/index.css',
-		'./scripts/all.js',
-		'./favicon.ico',
-		'./sgrz.png',
-		'./images/background.jpg',
-		'./images/logo.png',
-		'./images/dojo.png',
-		'./images/new-game.png',
-		'./images/quit.png',
-		'./images/game-over.png',
-		'./images/home-desc.png',
-		'./images/home-mask.png',
-		'./images/ninja.png',
-		'./images/score.png',
-		'./images/lose.png',
-		'./images/developing.png',
-		'./images/flash.png',
-		'./images/shadow.png',
-		'./images/smoke.png',
-		'./images/x.png',
-		'./images/xf.png',
-		'./images/xx.png',
-		'./images/xxf.png',
-		'./images/xxx.png',
-		'./images/xxxf.png',
-		'./images/fruit/apple.png',
-		'./images/fruit/apple-1.png',
-		'./images/fruit/apple-2.png',
-		'./images/fruit/banana.png',
-		'./images/fruit/banana-1.png',
-		'./images/fruit/banana-2.png',
-		'./images/fruit/basaha.png',
-		'./images/fruit/basaha-1.png',
-		'./images/fruit/basaha-2.png',
-		'./images/fruit/peach.png',
-		'./images/fruit/peach-1.png',
-		'./images/fruit/peach-2.png',
-		'./images/fruit/sandia.png',
-		'./images/fruit/sandia-1.png',
-		'./images/fruit/sandia-2.png',
-		'./images/fruit/boom.png',
-		'./sound/menu.mp3',
-		'./sound/menu.ogg',
-		'./sound/start.mp3',
-		'./sound/start.ogg',
-		'./sound/throw.mp3',
-		'./sound/throw.ogg',
-		'./sound/boom.mp3',
-		'./sound/boom.ogg',
-		'./sound/over.mp3',
-		'./sound/over.ogg',
-		'./sound/splatter.mp3',
-		'./sound/splatter.ogg'
-	];
-// 安装 Service Worker
-self.addEventListener('install', event => {
-	console.log('🚀 安装 Service Worker (版本:', CACHE_NAME);
-	event.waitUntil(
-		caches.open(CACHE_NAME)
-		.then(cache => {
-			console.log('📦 缓存资源');
-			return cache.addAll(ASSETS_TO_CACHE);
-		})
-		.then(() => {
-			console.log('⏩ 强制接管所有客户端');
-			return self.skipWaiting();
-		})
-	);
+// 版本
+const Ver = '1778418253';
+// 安装：缓存资源 + 立即激活
+self.addEventListener('install', e => {
+	e.waitUntil((async () => {
+		try {
+			// 打开缓存并缓存所有资源
+			await (await caches.open(Ver)).addAll([
+			'./',
+			'./404.html',
+			'./css/index.css',
+			'./favicon.ico',
+			'./images/background.jpg',
+			'./images/blank.gif',
+			'./images/cursor.png',
+			'./images/developing.png',
+			'./images/dojo.png',
+			'./images/flash.png',
+			'./images/fruit/apple-1.png',
+			'./images/fruit/apple-2.png',
+			'./images/fruit/apple.png',
+			'./images/fruit/banana-1.png',
+			'./images/fruit/banana-2.png',
+			'./images/fruit/banana.png',
+			'./images/fruit/basaha-1.png',
+			'./images/fruit/basaha-2.png',
+			'./images/fruit/basaha.png',
+			'./images/fruit/boom.png',
+			'./images/fruit/peach-1.png',
+			'./images/fruit/peach-2.png',
+			'./images/fruit/peach.png',
+			'./images/fruit/sandia-1.png',
+			'./images/fruit/sandia-2.png',
+			'./images/fruit/sandia.png',
+			'./images/game-over.png',
+			'./images/home-desc.png',
+			'./images/home-mask.png',
+			'./images/icons/144.png',
+			'./images/icons/192.png',
+			'./images/icons/48.png',
+			'./images/icons/512.png',
+			'./images/icons/72.png',
+			'./images/icons/96.png',
+			'./images/icons/apple-180.png',
+			'./images/logo.png',
+			'./images/lose.png',
+			'./images/new-game.png',
+			'./images/new.png',
+			'./images/ninja.png',
+			'./images/quit.png',
+			'./images/score.png',
+			'./images/sgrz.png',
+			'./images/shadow.png',
+			'./images/smoke.png',
+			'./images/x.png',
+			'./images/xf.png',
+			'./images/xx.png',
+			'./images/xxf.png',
+			'./images/xxx.png',
+			'./images/xxxf.png',
+			'./index.html',
+			'./manifest.json',
+			'./package.json',
+			'./scripts/all.js',
+			'./sound/boom.mp3',
+			'./sound/boom.ogg',
+			'./sound/menu.mp3',
+			'./sound/menu.ogg',
+			'./sound/over.mp3',
+			'./sound/over.ogg',
+			'./sound/splatter.mp3',
+			'./sound/splatter.ogg',
+			'./sound/start.mp3',
+			'./sound/start.ogg',
+			'./sound/throw.mp3',
+			'./sound/throw.ogg'
+		]);
+			// 跳过等待，直接激活新SW
+			await self.skipWaiting();
+		} catch (error) {
+			console.error('❌ SW安装失败:', error);
+			// 安装失败时重新抛出错误
+			throw error;
+		}
+	})());
 });
-// 激活 Service Worker
-self.addEventListener('activate', event => {
-	console.log('✨ 激活 Service Worker');
-	event.waitUntil(
-		caches.keys().then(cacheNames => {
-			return Promise.all(
-				cacheNames.filter(cacheName => {
-					return cacheName !== CACHE_NAME;
-				}).map(cacheName => {
-					console.log('🗑️ 删除旧缓存:', cacheName);
-					return caches.delete(cacheName);
-				})
+// 激活：删除旧缓存 + 控制页面 + 发送更新消息
+self.addEventListener('activate', e => {
+	e.waitUntil((async () => {
+		try {
+			// 删除非当前版本的缓存
+			await Promise.all(
+				(await caches.keys()).filter(n => n !== Ver).map(n => caches.delete(
+					n))
 			);
-		}).then(() => {
-			console.log('🔄 激活并控制所有打开的标签页');
-			return self.clients.claim();
-		}).then(() => {
-			// 向所有客户端发送更新通知
-			self.clients.matchAll().then(clients => {
-				clients.forEach(client => {
-					client.postMessage({
-						type: 'CACHE_UPDATED',
-						version: CACHE_NAME
-					});
-				});
+			// 立即控制所有页面
+			await self.clients.claim();
+			// 向页面发送缓存更新消息
+			(await self.clients.matchAll({
+				includeUncontrolled: 1,
+				type: 'window'
+			}))
+			.forEach(c => c.postMessage({
+				type: 'CACHE_UPDATED',
+				version: Ver
+			}));
+		} catch (error) {
+			console.error('❌ SW激活失败:', error);
+			throw error;
+		}
+	})());
+});
+// 接收页面消息：触发SKIP_WAITING更新
+self.addEventListener('message', e => {
+	e.data === 'SKIP_WAITING' && self.skipWaiting();
+});
+// 拦截请求：缓存优先 + 离线支持 + 状态通知
+self.addEventListener('fetch', e => {
+	const req = e.request;
+	if (req.method !== 'GET') return;
+	const accept = req.headers.get('accept');
+	// 判断是否为HTML页面请求
+	const isHTML = req.destination === 'document' || (accept && accept.includes('text/html'));
+	e.respondWith((async () => {
+		try {
+			// 读取缓存
+			const cacheRes = await caches.match(req, {
+				ignoreSearch: true
 			});
-		})
-	);
-});
-// 消息处理来自客户端的消息
-self.addEventListener('message', event => {
-	if (event.data === 'SKIP_WAITING') self.skipWaiting();
-});
-// 网络请求拦截 - 缓存优先策略（同时更新策略）
-self.addEventListener('fetch', event => {
-	const isHTML = event.request.headers.get('accept') && event.request.headers.get('accept').includes(
-		'text/html');
-	event.respondWith(
-		caches.match(event.request)
-		.then(cachedResponse => {
-			if (cachedResponse) {
-				if (isHTML) {
-					console.log('✅ 缓存命中:', event.request.url);
-					// 延迟发送通知，确保客户端已就绪
-					setTimeout(() => {
-						self.clients.matchAll().then(clients => {
-							clients.forEach(client => {
-								client.postMessage({
-									type: 'CACHE_STATUS',
-									status: 'HIT',
-									url: event.request.url,
-									version: CACHE_NAME
-								});
-							});
-						});
-					}, 1000);
-				}
-				return cachedResponse;
+			if (cacheRes) {
+				// HTML请求：延迟发送缓存命中消息
+				isHTML && setTimeout(async () => {
+					(await self.clients.matchAll({
+						includeUncontrolled: 1,
+						type: 'window'
+					})).forEach(c => c.postMessage({
+						type: 'CACHE_STATUS',
+						status: 'HIT',
+						url: req.url,
+						version: Ver
+					}));
+				}, 500);
+				return cacheRes;
 			}
-			// 缓存中没有，从网络获取
-			return fetch(event.request)
-				.then(response => {
-					if (!response || response.status !== 200 || response.type !== 'basic')
-						return response;
-					const responseToCache = response.clone();
-					caches.open(CACHE_NAME)
-						.then(cache => {
-							cache.put(event.request, responseToCache);
-						});
-					return response;
-				})
-				.catch(error => {
-					console.log('❌ 请求失败:', error);
-					// 如果是HTML请求，返回首页缓存
-					if (isHTML) {
-						console.log('📴 离线模式');
-						self.clients.matchAll().then(clients => {
-							clients.forEach(client => {
-								client.postMessage({
-									type: 'CACHE_STATUS',
-									status: 'OFFLINE',
-									version: CACHE_NAME
-								});
-							});
-						});
-						return caches.match('./').then(cachedResponse => {
-							return cachedResponse || new Response('Offline', {
-								status: 503
-							});
-						});
+			// HTML请求：延迟发送缓存命中消息
+			isHTML && setTimeout(async () => {
+				(await self.clients.matchAll({
+					includeUncontrolled: 1,
+					type: 'window'
+				})).forEach(c => c.postMessage({
+					type: 'CACHE_STATUS',
+					status: 'MISS',
+					url: req.url,
+					version: Ver
+				}));
+			}, 500);
+			// 缓存未命中，请求网络
+			const networkRes = await fetch(req);
+			// 提前克隆响应，避免body重复使用
+			const cloneRes = networkRes.clone();
+			// 异步缓存资源，非有效响应，直接返回
+			if (networkRes && networkRes.status === 200 && networkRes.type === 'basic') caches
+				.open(Ver).then(cache => cache.put(req, cloneRes));
+			return networkRes;
+		} catch (err) {
+			// 网络异常：离线模式处理
+			if (isHTML) {
+				// 发送离线状态消息
+				setTimeout(async () => {
+					(await self.clients.matchAll({
+						includeUncontrolled: 1,
+						type: 'window'
+					})).forEach(c => c.postMessage({
+						type: 'CACHE_STATUS',
+						status: 'OFFLINE',
+						version: Ver
+					}));
+				}, 500);
+				// 返回离线页面
+				return await caches.match('./index.html') ?? new Response(
+					'离线模式：无法加载页面', {
+						status: 503,
+						headers: {
+							'Content-Type': 'text/plain; charset=utf-8'
+						}
 					}
-					return new Response('Network error', {
-						status: 503
-					});
-				});
-		})
-	);
+				);
+			}
+			// 非HTML请求返回网络错误
+			return new Response('Network error', {
+				status: 503
+			});
+		}
+	})());
 });
-// 定期检查更新（每小时）
-setInterval(() => {
-	self.registration.update()
-		.then(reg => reg.update())
-		.catch(err => console.log('🔄 检查更新:', err));
-}, 60 * 60 * 1000);

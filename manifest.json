@@ -1,43 +1,94 @@
 {
-  "name": "水果忍者网页版",
-  "short_name": "水果忍者",
-  "description": "水果忍者的网页版本，支持游戏手柄！",
-  "version": "2.0.0",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#794621",
-  "theme_color": "#794621",
-  "orientation": "landscape",
-  "scope": "./",
-  "icons": [
-    {
-      "src": "./favicon.ico",
-      "sizes": "32x32",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "./images/logo.png",
-      "sizes": "240x79",
-      "type": "image/png"
-    },
-    {
-      "src": "./sgrz.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "经典模式",
-      "description": "立即开始经典水果忍者模式",
-      "url": "./?mode=classic",
-      "icons": [{"src": "./sgrz.png", "sizes": "512x512"}]
-    },
-    {
-      "name": "道场模式",
-      "description": "挑战限时道场模式",
-      "url": "./?mode=dojo",
-      "icons": [{"src": "./sgrz.png", "sizes": "512x512"}]
-    }
-  ]
+	"name": "水果忍者网页版",
+	"short_name": "水果忍者",
+	"description": "水果忍者的网页版本，一起赛博切水果！支持使用触屏，鼠标，以及手柄畅玩！",
+	"start_url": "./",
+	"display": "standalone",
+	"background_color": "#794621",
+	"theme_color": "#794621",
+	"orientation": "any",
+	"scope": "./",
+	"icons": [{
+		"src": "./images/icons/48.png",
+		"sizes": "48x48",
+		"type": "image/png",
+		"purpose": "maskable"
+	}, {
+		"src": "./images/icons/72.png",
+		"sizes": "72x72",
+		"type": "image/png",
+		"purpose": "maskable"
+	}, {
+		"src": "./images/icons/96.png",
+		"sizes": "96x96",
+		"type": "image/png",
+		"purpose": "maskable"
+	}, {
+		"src": "./images/icons/144.png",
+		"sizes": "144x144",
+		"type": "image/png",
+		"purpose": "maskable"
+	}, {
+		"src": "./images/icons/apple-180.png",
+		"sizes": "180x180",
+		"type": "image/png",
+		"purpose": "any"
+	}, {
+		"src": "./images/icons/192.png",
+		"sizes": "192x192",
+		"type": "image/png",
+		"purpose": "maskable"
+	}, {
+		"src": "./images/icons/512.png",
+		"sizes": "512x512",
+		"type": "image/png",
+		"purpose": "maskable"
+	}],
+	"screenshots": [{
+		"src": "./images/screenshots/1.png",
+		"sizes": "2564x1444",
+		"type": "image/png",
+		"form_factor": "wide",
+		"label": "游戏 水果忍者",
+		"platform": "网页(WEB)"
+	}, {
+		"src": "./images/screenshots/2.png",
+		"sizes": "2564x1444",
+		"type": "image/png",
+		"form_factor": "wide",
+		"label": "游戏 水果忍者",
+		"platform": "网页(WEB)"
+	}, {
+		"src": "./images/screenshots/1.png",
+		"sizes": "2564x1444",
+		"type": "image/png",
+		"form_factor": "narrow",
+		"label": "游戏 水果忍者",
+		"platform": "网页(WEB)"
+	}, {
+		"src": "./images/screenshots/2.png",
+		"sizes": "2564x1444",
+		"type": "image/png",
+		"form_factor": "narrow",
+		"label": "游戏 水果忍者",
+		"platform": "网页(WEB)"
+	}],
+	"display_override": [
+		"window-controls-overlay",
+		"standalone"
+	],
+	"id": "heheda-fn",
+	"dir": "ltr",
+	"lang": "zh",
+	"categories": [
+		"games"
+	],
+	"edge_side_panel": {
+		"preferred_width": 400
+	},
+	"related_applications": [{
+		"platform": "webapp",
+		"url": "https://nes.heheda.top",
+		"id": "heheda-nes"
+	}]
 }

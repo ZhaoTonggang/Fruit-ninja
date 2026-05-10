@@ -1,0 +1,4 @@
+User-agent: *
+Allow: *
+Sitemap: https://fn.heheda.top/sitemap.txt
+Sitemap: https://fn.heheda.cn/sitemap.txt

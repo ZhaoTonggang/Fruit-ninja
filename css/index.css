@@ -87,11 +87,11 @@ body {
 	position: fixed;
 	top: 10px;
 	right: 10px;
-	color: white;
+	color: #fff;
 	padding: 8px;
 	border-radius: 4px;
 	font-family: Arial, sans-serif;
-	font-size: 16px;
+	font-size: 18px;
 	z-index: 2147483647;
 	animation: fadeInOut 4s ease-out forwards;
 }

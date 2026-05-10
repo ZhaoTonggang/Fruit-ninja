@@ -1,6 +1,12 @@
 "use strict";
 /**
- * this file was compiled by jsbuild 0.9.6
+ * 二次制作
+ * @date 2025-05-10
+ * @author 赵彤刚
+ * @site https://blog.heheda.top
+ */
+/**
+ * 原始信息
  * @date Mon, 16 Jul 2012 18:46:47 UTC
  * @author dron
  * @site http://ucren.com
@@ -255,8 +261,8 @@ define("scripts/gamepad.js", (exports) => {
 		if (dx !== 0 || dy !== 0) {
 			cursorX += dx * speed;
 			cursorY += dy * speed;
-			cursorX = Math.max(20, Math.min(620, cursorX));
-			cursorY = Math.max(20, Math.min(460, cursorY));
+			cursorX = Math.max(10, Math.min(630, cursorX));
+			cursorY = Math.max(10, Math.min(470, cursorY));
 			updateCursorPosition();
 		}
 		// 按钮状态 - 切割按钮 (排除加速键)
@@ -2006,121 +2012,111 @@ define("scripts/lib/buzz.js", function(exports) {
 				supported = buzz.isSupported();
 			// publics
 			this.load = function() {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.sound.load();
 				}
-				this.sound.load();
 				return this;
 			};
 			this.play = function() {
-				if (!supported) {
-					return this;
+				if (supported && (!this.sound || this.sound.paused) && !this._clickListenerAdded) {
+					this.sound.play().catch((e) => {
+						// 只处理自动播放策略错误
+						if (e.name === 'NotAllowedError') {
+							this._clickListenerAdded = true;
+							document.addEventListener('click', () => {
+								this._clickListenerAdded = false;
+								this.sound.play().catch(console.error);
+							}, {
+								once: true
+							});
+						} else {
+							// 其他错误正常抛出或处理
+							console.error('音频播放失败:', e);
+						}
+					});
 				}
-				this.sound.play();
 				return this;
 			};
 			this.togglePlay = function() {
-				if (!supported) {
-					return this;
-				}
-				if (this.sound.paused) {
-					this.sound.play();
-				} else {
-					this.sound.pause();
+				if (supported) {
+					if (this.sound.paused) {
+						this.sound.play();
+					} else {
+						this.sound.pause();
+					}
 				}
 				return this;
 			};
 			this.pause = function() {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.sound.pause();
 				}
-				this.sound.pause();
 				return this;
 			};
 			this.isPaused = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return this.sound.paused;
 			};
 			this.stop = function() {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.setTime(this.getDuration());
+					this.sound.pause();
 				}
-				this.setTime(this.getDuration());
-				this.sound.pause();
 				return this;
 			};
 			this.isEnded = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return this.sound.ended;
 			};
 			this.loop = function() {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.sound.loop = 'loop';
+					this.bind('ended.buzzloop', function() {
+						this.currentTime = 0;
+						this.play();
+					});
 				}
-				this.sound.loop = 'loop';
-				this.bind('ended.buzzloop', function() {
-					this.currentTime = 0;
-					this.play();
-				});
 				return this;
 			};
 			this.unloop = function() {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.sound.removeAttribute('loop');
+					this.unbind('ended.buzzloop');
 				}
-				this.sound.removeAttribute('loop');
-				this.unbind('ended.buzzloop');
 				return this;
 			};
 			this.mute = function() {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.sound.muted = true;
 				}
-				this.sound.muted = true;
 				return this;
 			};
 			this.unmute = function() {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.sound.muted = false;
 				}
-				this.sound.muted = false;
 				return this;
 			};
 			this.toggleMute = function() {
-				if (!supported) {
-					return this;
-				}
+				if (!supported) return this;
 				this.sound.muted = !this.sound.muted;
 				return this;
 			};
 			this.isMuted = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return this.sound.muted;
 			};
 			this.setVolume = function(volume) {
-				if (!supported) {
-					return this;
+				if (supported) {
+					if (volume < 0) volume = 0;
+					if (volume > 100) volume = 100;
+					this.volume = volume;
+					this.sound.volume = volume / 100;
 				}
-				if (volume < 0) {
-					volume = 0;
-				}
-				if (volume > 100) {
-					volume = 100;
-				}
-				this.volume = volume;
-				this.sound.volume = volume / 100;
 				return this;
 			};
 			this.getVolume = function() {
-				if (!supported) {
-					return this;
-				}
+				if (!supported) return this;
 				return this.volume;
 			};
 			this.increaseVolume = function(value) {
@@ -2130,82 +2126,59 @@ define("scripts/lib/buzz.js", function(exports) {
 				return this.setVolume(this.volume - (value || 1));
 			};
 			this.setTime = function(time) {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.whenReady(function() {
+						this.sound.currentTime = time;
+					});
 				}
-				this.whenReady(function() {
-					this.sound.currentTime = time;
-				});
 				return this;
 			};
 			this.getTime = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				var time = Math.round(this.sound.currentTime * 100) / 100;
 				return isNaN(time) ? buzz.defaults.placeholder : time;
 			};
 			this.setPercent = function(percent) {
-				if (!supported) {
-					return this;
-				}
+				if (!supported) return this;
 				return this.setTime(buzz.fromPercent(percent, this.sound.duration));
 			};
 			this.getPercent = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				var percent = Math.round(buzz.toPercent(this.sound.currentTime, this.sound
 					.duration));
 				return isNaN(percent) ? buzz.defaults.placeholder : percent;
 			};
 			this.setSpeed = function(duration) {
-				if (!supported) {
-					return this;
-				}
+				if (!supported) return this;
 				this.sound.playbackRate = duration;
 			};
 			this.getSpeed = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return this.sound.playbackRate;
 			};
 			this.getDuration = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				var duration = Math.round(this.sound.duration * 100) / 100;
 				return isNaN(duration) ? buzz.defaults.placeholder : duration;
 			};
 			this.getPlayed = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return timerangeToArray(this.sound.played);
 			};
 			this.getBuffered = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return timerangeToArray(this.sound.buffered);
 			};
 			this.getSeekable = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return timerangeToArray(this.sound.seekable);
 			};
 			this.getErrorCode = function() {
-				if (supported && this.sound.error) {
-					return this.sound.error.code;
-				}
+				if (supported && this.sound.error) return this.sound.error.code;
 				return 0;
 			};
 			this.getErrorMessage = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				switch (this.getErrorCode()) {
 					case 1:
 						return 'MEDIA_ERR_ABORTED';
@@ -2220,15 +2193,11 @@ define("scripts/lib/buzz.js", function(exports) {
 				}
 			};
 			this.getStateCode = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return this.sound.readyState;
 			};
 			this.getStateMessage = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				switch (this.getStateCode()) {
 					case 0:
 						return 'HAVE_NOTHING';
@@ -2245,15 +2214,11 @@ define("scripts/lib/buzz.js", function(exports) {
 				}
 			};
 			this.getNetworkStateCode = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return this.sound.networkState;
 			};
 			this.getNetworkStateMessage = function() {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				switch (this.getNetworkStateCode()) {
 					case 0:
 						return 'NETWORK_EMPTY';
@@ -2268,64 +2233,57 @@ define("scripts/lib/buzz.js", function(exports) {
 				}
 			};
 			this.set = function(key, value) {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.sound[key] = value;
 				}
-				this.sound[key] = value;
 				return this;
 			};
 			this.get = function(key) {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				return key ? this.sound[key] : this.sound;
 			};
 			this.bind = function(types, func) {
-				if (!supported) {
-					return this;
-				}
-				types = types.split(' ');
-				var that = this,
-					efunc = function(e) {
-						func.call(that, e);
-					};
-				for (var t = 0; t < types.length; t++) {
-					var type = types[t],
-						idx = type;
-					type = idx.split('.')[0];
-					events.push({
-						idx: idx,
-						func: efunc
-					});
-					this.sound.addEventListener(type, efunc, true);
+				if (supported) {
+					types = types.split(' ');
+					var that = this,
+						efunc = function(e) {
+							func.call(that, e);
+						};
+					for (var t = 0; t < types.length; t++) {
+						var type = types[t],
+							idx = type;
+						type = idx.split('.')[0];
+						events.push({
+							idx: idx,
+							func: efunc
+						});
+						this.sound.addEventListener(type, efunc, true);
+					}
 				}
 				return this;
 			};
 			this.unbind = function(types) {
-				if (!supported) {
-					return this;
-				}
-				types = types.split(' ');
-				for (var t = 0; t < types.length; t++) {
-					var idx = types[t],
-						type = idx.split('.')[0];
-					for (var i = 0; i < events.length; i++) {
-						var namespace = events[i].idx.split('.');
-						if (events[i].idx == idx || (namespace[1] && namespace[1] == idx
-								.replace(
-									'.', ''))) {
-							this.sound.removeEventListener(type, events[i].func, true);
-							// remove event
-							events.splice(i, 1);
+				if (supported) {
+					types = types.split(' ');
+					for (var t = 0; t < types.length; t++) {
+						var idx = types[t],
+							type = idx.split('.')[0];
+						for (var i = 0; i < events.length; i++) {
+							var namespace = events[i].idx.split('.');
+							if (events[i].idx == idx || (namespace[1] && namespace[1] == idx
+									.replace(
+										'.', ''))) {
+								this.sound.removeEventListener(type, events[i].func, true);
+								// remove event
+								events.splice(i, 1);
+							}
 						}
 					}
 				}
 				return this;
 			};
 			this.bindOnce = function(type, func) {
-				if (!supported) {
-					return this;
-				}
+				if (!supported) return this;
 				var that = this;
 				eventsOnce[pid++] = false;
 				this.bind(pid + type, function() {
@@ -2337,85 +2295,76 @@ define("scripts/lib/buzz.js", function(exports) {
 				});
 			};
 			this.trigger = function(types) {
-				if (!supported) {
-					return this;
-				}
-				types = types.split(' ');
-				for (var t = 0; t < types.length; t++) {
-					var idx = types[t];
-					for (var i = 0; i < events.length; i++) {
-						var eventType = events[i].idx.split('.');
-						if (events[i].idx == idx || (eventType[0] && eventType[0] == idx
-								.replace(
-									'.', ''))) {
-							this.sound.dispatchEvent(new Event(eventType[0], {
-								bubbles: false,
-								cancelable: true
-							}));
+				if (supported) {
+					types = types.split(' ');
+					for (var t = 0; t < types.length; t++) {
+						var idx = types[t];
+						for (var i = 0; i < events.length; i++) {
+							var eventType = events[i].idx.split('.');
+							if (events[i].idx == idx || (eventType[0] && eventType[0] == idx
+									.replace(
+										'.', ''))) {
+								this.sound.dispatchEvent(new Event(eventType[0], {
+									bubbles: false,
+									cancelable: true
+								}));
+							}
 						}
 					}
 				}
 				return this;
 			};
 			this.fadeTo = function(to, duration, callback) {
-				if (!supported) {
-					return this;
-				}
-				if (duration instanceof Function) {
-					callback = duration;
-					duration = buzz.defaults.duration;
-				} else {
-					duration = duration || buzz.defaults.duration;
-				}
-				var from = this.volume,
-					delay = duration / Math.abs(from - to),
-					that = this;
-				this.play();
+				if (supported) {
+					if (duration instanceof Function) {
+						callback = duration;
+						duration = buzz.defaults.duration;
+					} else {
+						duration = duration || buzz.defaults.duration;
+					}
+					var from = this.volume,
+						delay = duration / Math.abs(from - to),
+						that = this;
+					this.play();
 
-				function doFade() {
-					setTimeout(function() {
-						if (from < to && that.volume < to) {
-							that.setVolume(that.volume += 1);
-							doFade();
-						} else if (from > to && that.volume > to) {
-							that.setVolume(that.volume -= 1);
-							doFade();
-						} else if (callback instanceof Function) {
-							callback.apply(that);
-						}
-					}, delay);
+					function doFade() {
+						setTimeout(function() {
+							if (from < to && that.volume < to) {
+								that.setVolume(that.volume += 1);
+								doFade();
+							} else if (from > to && that.volume > to) {
+								that.setVolume(that.volume -= 1);
+								doFade();
+							} else if (callback instanceof Function) {
+								callback.apply(that);
+							}
+						}, delay);
+					}
+					this.whenReady(function() {
+						doFade();
+					});
 				}
-				this.whenReady(function() {
-					doFade();
-				});
 				return this;
 			};
 			this.fadeIn = function(duration, callback) {
-				if (!supported) {
-					return this;
-				}
+				if (!supported) return this;
 				return this.setVolume(0).fadeTo(100, duration, callback);
 			};
 			this.fadeOut = function(duration, callback) {
-				if (!supported) {
-					return this;
-				}
+				if (!supported) return this;
 				return this.fadeTo(0, duration, callback);
 			};
 			this.fadeWith = function(sound, duration) {
-				if (!supported) {
-					return this;
+				if (supported) {
+					this.fadeOut(duration, function() {
+						this.stop();
+					});
+					sound.play().fadeIn(duration);
 				}
-				this.fadeOut(duration, function() {
-					this.stop();
-				});
-				sound.play().fadeIn(duration);
 				return this;
 			};
 			this.whenReady = function(func) {
-				if (!supported) {
-					return null;
-				}
+				if (!supported) return null;
 				var that = this;
 				if (this.sound.readyState === 0) {
 					this.bind('canplay.buzzwhenready', function() {
@@ -2452,7 +2401,6 @@ define("scripts/lib/buzz.js", function(exports) {
 			}
 			// init
 			if (supported && src) {
-
 				for (var i in buzz.defaults) {
 					if (buzz.defaults.hasOwnProperty(i)) {
 						options[i] = options[i] || buzz.defaults[i];
@@ -8571,102 +8519,122 @@ define("scripts/object/score.js", function(exports) {
 	};
 	return exports;
 });
-// 页面加载完成
-window.addEventListener('DOMContentLoaded', () => {
-	console.log('🚀 页面加载完成');
-	// 解析 URL 参数（快捷方式
-	const mode = new URLSearchParams(window.location.search).get('mode');
-	// 可以在这里直接跳转到对应模式
-	if (mode === 'classic' || mode === 'dojo') console.log('🎮 从快捷方式启动:', mode);
-});
-// Service Worker 注册
-if ('serviceWorker' in navigator) {
-	window.addEventListener('load', () => {
-		// 初始化媒体会话
-		if ('mediaSession' in navigator) {
-			console.log('🎵 媒体会话 API 可用');
-			navigator.mediaSession.metadata = new MediaMetadata({
-				title: '水果忍者',
-				artist: '网页版',
-				album: '水果忍者游戏',
-				artwork: [{
-					src: './sgrz.png',
-					sizes: '512x512',
-					type: 'image/png'
-				}]
-			});
-			// 音频控制（如果需要的话
-			navigator.mediaSession.setActionHandler('play', () => {
-				console.log('▶️ 播放');
-			});
-			navigator.mediaSession.setActionHandler('pause', () => {
-				console.log('⏸️ 暂停');
-			});
-			navigator.mediaSession.setActionHandler('stop', () => {
-				console.log('⏹️ 停止');
-			});
-		};
-		navigator.serviceWorker.register('./sw.js')
-			.then(registration => {
-				console.log('✅ Service Worker 注册成功:', registration.scope);
-				// 监听更新
-				registration.addEventListener('updatefound', () => {
-					const newWorker = registration.installing;
-					console.log('🔄 发现新版本！');
-					newWorker.addEventListener('statechange', () => {
-						if (newWorker.state === 'installed') {
-							console.log('🎉 新版本已准备好！');
-							if (navigator.serviceWorker.controller) {
-								// 提示用户有新版本
-								if (confirm('水果忍者有新版本啦！\n点击确定立即更新？')) {
-									newWorker.postMessage('SKIP_WAITING');
-									window.location.reload();
-								}
-							}
-						}
-					});
-				});
-				// 定期检查更新（每30分钟
-				setInterval(() => {
-					registration.update()
-						.then(() => console.log('🔍 检查更新完成'))
-						.catch(err => console.log('❌ 检查更新失败:', err));
-				}, 30 * 60 * 1000);
-			})
-			.catch(error => {
-				console.log('❌ Service Worker 注册失败:', error);
-			});
-		// 监听来自 SW 的消息
-		navigator.serviceWorker.addEventListener('message', (event) => {
-			if (event.data && event.data.type === 'CACHE_UPDATED') console.log('✨ 缓存已更新为版本:', event.data
-				.version);
-			// 📦 缓存状态提示显示
-			if (event.data && event.data.type === 'CACHE_STATUS') {
-				const status = event.data.status,
-					version = event.data.version;
-				console.log('📦 显示缓存状态:', status, version);
-				// 提示元素
-				const cacheStatusElement = document.getElementById('Status');
-				let message = '',
-					color = '';
-				if (status === 'HIT') {
-					message = '✅ 使用缓存资源';
-					color = '#4caf50'; // 绿色
-				} else if (status === 'OFFLINE') {
-					message = '📴 离线模式 - 使用缓存';
-					color = '#ff9800'; // 橙色
-				}
-				cacheStatusElement.style.backgroundColor = color;
-				cacheStatusElement.textContent = message;
-				// 5秒后自动移除
-				setTimeout(() => {
-					if (cacheStatusElement && cacheStatusElement.parentNode) cacheStatusElement
-						.remove();
-				}, 5000);
-			}
-		});
+// 初始化媒体会话
+if ('mediaSession' in navigator) {
+	console.log('🎵 媒体会话 API 可用');
+	navigator.mediaSession.metadata = new MediaMetadata({
+		title: '水果忍者',
+		artist: '网页版',
+		album: '水果忍者游戏',
+		artwork: [{
+			src: './images/icons/512.png',
+			sizes: '512x512',
+			type: 'image/png'
+		}]
 	});
-}
+};
+// 开始 Service Worker
+(async () => {
+	// 浏览器兼容性检测
+	if (!('serviceWorker' in navigator)) {
+		console.log('❌ 当前浏览器不支持 Service Worker');
+		return;
+	}
+	// 监听SW发送的消息
+	navigator.serviceWorker.addEventListener('message', (event) => {
+		if (!event.data) return;
+		// 缓存更新完成通知
+		if (event.data.type === 'CACHE_UPDATED') {
+			console.log('✨ 缓存已更新为版本:', event.data.version);
+			localStorage.removeItem('updateRejectedAt');
+			localStorage.removeItem('updateRejectedVersion');
+		}
+		// 缓存状态提示（命中/离线）
+		if (event.data.type === 'CACHE_STATUS') {
+			const {
+				status
+			} = event.data, el = document.getElementById('Status');
+			if (!el) return;
+			const [message, color] = status === 'HIT' ? ['使用缓存加载', '#4caf50'] : 'MISS' ? [
+				'正在缓存资源', '#60b5ff'
+			] : ['离线模式', '#ff9800'];
+			el.style.backgroundColor = color;
+			el.textContent = message;
+			el.style.display = 'block';
+			setTimeout(() => el.style.display = 'none', 5000);
+		}
+	});
+	// 新SW激活后自动刷新页面
+	navigator.serviceWorker.addEventListener('controllerchange', () => {
+		window.location.reload();
+	});
+	try {
+		// 版本更新提示函数
+		const showUpdatePrompt = (worker) => {
+			if (confirm('水果忍者有新版本啦！\n点击确定立即更新？')) {
+				try {
+					worker.postMessage('SKIP_WAITING');
+					alert('正在更新，请稍候...'); // 防止用户多次点击
+				} catch (err) {
+					console.error('❌ 发送更新消息失败:', err);
+					window.location.reload();
+				}
+			} else {
+				// 记录拒绝时间和版本号，24小时内不再提示同一版本
+				localStorage.setItem('updateRejectedAt', Date.now().toString());
+				localStorage.setItem('updateRejectedVersion', worker.scriptURL);
+			}
+		};
+		// 注册Service Worker
+		const registration = await navigator.serviceWorker.register('./sw.js', {
+			scope: './'
+		});
+		console.log('✅ Service Worker 注册成功:', registration.scope);
+		// 处理已存在的待激活版本
+		if (registration.waiting) {
+			console.log('🎉 已有新版本等待激活！');
+			const lastRejected = localStorage.getItem('updateRejectedAt');
+			const isSameVersion = localStorage.getItem('updateRejectedVersion') === registration.waiting
+				.scriptURL;
+			if (!lastRejected || !isSameVersion || Date.now() - parseInt(lastRejected) > 86400000) {
+				showUpdatePrompt(registration.waiting);
+			}
+		}
+		// 监听新版本发现
+		registration.addEventListener('updatefound', () => {
+			const newWorker = registration.installing;
+			console.log('🔄 发现新版本！');
+			newWorker.addEventListener('statechange', () => {
+				if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+					console.log('🎉 新版本已准备好！');
+					showUpdatePrompt(newWorker);
+				}
+			}, {
+				once: true
+			});
+		});
+		return registration;
+	} catch (error) {
+		console.log('❌ Service Worker 注册失败:', error);
+	}
+})();
+// 初次点击触发全屏
+document.addEventListener('click', () => {
+	const htmlel = document.documentElement;
+	if (htmlel.requestFullscreen) {
+		htmlel.requestFullscreen();
+	} else if (htmlel.mozRequestFullScreen) {
+		htmlel.mozRequestFullScreen();
+	} else if (htmlel.webkitRequestFullscreen) {
+		htmlel.webkitRequestFullscreen();
+	} else if (htmlel.msRequestFullscreen) {
+		htnlel.msRequestFullscreen();
+	} else {
+		console.warn('浏览器不支持全屏模式');
+	}
+}, {
+	once: true
+});
 // 页面关闭提示
 window.addEventListener("beforeunload", e => {
 	e.preventDefault();
