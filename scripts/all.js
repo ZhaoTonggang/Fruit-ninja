@@ -8547,14 +8547,15 @@ if ('mediaSession' in navigator) {
 		if (!event.data) return;
 		// 缓存更新完成通知
 		if (event.data.type === 'CACHE_UPDATED') {
-			console.log('✨ 缓存已更新为版本:', event.data.version);
+			console.log('✨ PWA缓存已更新为版本:', event.data.version);
 			localStorage.removeItem('updateRejectedAt');
 			localStorage.removeItem('updateRejectedVersion');
 		}
 		// 缓存状态提示（命中/离线）
 		if (event.data.type === 'CACHE_STATUS') {
 			const {
-				status
+				status,
+				version
 			} = event.data, el = document.getElementById('Status');
 			if (!el) return;
 			const [message, color] = status === 'HIT' ? ['使用缓存加载', '#4caf50'] : 'MISS' ? [
@@ -8562,6 +8563,7 @@ if ('mediaSession' in navigator) {
 			] : ['离线模式', '#ff9800'];
 			el.style.backgroundColor = color;
 			el.textContent = message;
+			console.log(message + '，当前数据版本:' + version);
 			el.style.display = 'block';
 			setTimeout(() => el.style.display = 'none', 5000);
 		}
@@ -8573,7 +8575,7 @@ if ('mediaSession' in navigator) {
 	try {
 		// 版本更新提示函数
 		const showUpdatePrompt = (worker) => {
-			if (confirm('水果忍者有新版本啦！\n点击确定立即更新？')) {
+			if (confirm('检测到程序数据更新，请点击确定更新至最新数据！')) {
 				try {
 					worker.postMessage('SKIP_WAITING');
 					alert('正在更新，请稍候...'); // 防止用户多次点击
