@@ -1,84 +1,86 @@
+'use strict';
 // 版本
-const Ver = '1778439097';
+const Ver = 1778481106,
+	cName = 'PWA-' + Ver;
 // 安装：缓存资源 + 立即激活
 self.addEventListener('install', e => {
 	e.waitUntil((async () => {
 		try {
 			// 打开缓存并缓存所有资源
-			await (await caches.open(Ver)).addAll([
-			'./',
-			'./404.html',
-			'./css/index.css',
-			'./favicon.ico',
-			'./images/background.jpg',
-			'./images/blank.gif',
-			'./images/cursor.png',
-			'./images/developing.png',
-			'./images/dojo.png',
-			'./images/flash.png',
-			'./images/fruit/apple-1.png',
-			'./images/fruit/apple-2.png',
-			'./images/fruit/apple.png',
-			'./images/fruit/banana-1.png',
-			'./images/fruit/banana-2.png',
-			'./images/fruit/banana.png',
-			'./images/fruit/basaha-1.png',
-			'./images/fruit/basaha-2.png',
-			'./images/fruit/basaha.png',
-			'./images/fruit/boom.png',
-			'./images/fruit/peach-1.png',
-			'./images/fruit/peach-2.png',
-			'./images/fruit/peach.png',
-			'./images/fruit/sandia-1.png',
-			'./images/fruit/sandia-2.png',
-			'./images/fruit/sandia.png',
-			'./images/game-over.png',
-			'./images/home-desc.png',
-			'./images/home-mask.png',
-			'./images/icons/144.png',
-			'./images/icons/192.png',
-			'./images/icons/48.png',
-			'./images/icons/512.png',
-			'./images/icons/72.png',
-			'./images/icons/96.png',
-			'./images/icons/apple-1024.png',
-			'./images/icons/apple-144.png',
-			'./images/icons/apple-180.png',
-			'./images/icons/apple-192.png',
-			'./images/icons/apple-512.png',
-			'./images/icons/apple-72.png',
-			'./images/logo.png',
-			'./images/lose.png',
-			'./images/new-game.png',
-			'./images/new.png',
-			'./images/ninja.png',
-			'./images/quit.png',
-			'./images/score.png',
-			'./images/sgrz.png',
-			'./images/shadow.png',
-			'./images/smoke.png',
-			'./images/x.png',
-			'./images/xf.png',
-			'./images/xx.png',
-			'./images/xxf.png',
-			'./images/xxx.png',
-			'./images/xxxf.png',
-			'./index.html',
-			'./manifest.json',
-			'./scripts/all.js',
-			'./sound/boom.mp3',
-			'./sound/boom.ogg',
-			'./sound/menu.mp3',
-			'./sound/menu.ogg',
-			'./sound/over.mp3',
-			'./sound/over.ogg',
-			'./sound/splatter.mp3',
-			'./sound/splatter.ogg',
-			'./sound/start.mp3',
-			'./sound/start.ogg',
-			'./sound/throw.mp3',
-			'./sound/throw.ogg'
-		]);
+			await (await caches.open(cName)).addAll([
+				'./',
+				'./404.html',
+				'./css/index.css',
+				'./favicon.ico',
+				'./images/background.jpg',
+				'./images/blank.gif',
+				'./images/cursor.png',
+				'./images/developing.png',
+				'./images/dojo.png',
+				'./images/flash.png',
+				'./images/fruit/apple-1.png',
+				'./images/fruit/apple-2.png',
+				'./images/fruit/apple.png',
+				'./images/fruit/banana-1.png',
+				'./images/fruit/banana-2.png',
+				'./images/fruit/banana.png',
+				'./images/fruit/basaha-1.png',
+				'./images/fruit/basaha-2.png',
+				'./images/fruit/basaha.png',
+				'./images/fruit/boom.png',
+				'./images/fruit/peach-1.png',
+				'./images/fruit/peach-2.png',
+				'./images/fruit/peach.png',
+				'./images/fruit/sandia-1.png',
+				'./images/fruit/sandia-2.png',
+				'./images/fruit/sandia.png',
+				'./images/game-over.png',
+				'./images/home-desc.png',
+				'./images/home-mask.png',
+				'./images/icons/144.png',
+				'./images/icons/192.png',
+				'./images/icons/48.png',
+				'./images/icons/512.png',
+				'./images/icons/72.png',
+				'./images/icons/96.png',
+				'./images/icons/apple-1024.png',
+				'./images/icons/apple-144.png',
+				'./images/icons/apple-180.png',
+				'./images/icons/apple-192.png',
+				'./images/icons/apple-512.png',
+				'./images/icons/apple-72.png',
+				'./images/logo.png',
+				'./images/lose.png',
+				'./images/new-game.png',
+				'./images/new.png',
+				'./images/ninja.png',
+				'./images/quit.png',
+				'./images/score.png',
+				'./images/sgrz.png',
+				'./images/shadow.png',
+				'./images/smoke.png',
+				'./images/x.png',
+				'./images/xf.png',
+				'./images/xx.png',
+				'./images/xxf.png',
+				'./images/xxx.png',
+				'./images/xxxf.png',
+				'./index.html',
+				'./manifest.json',
+				'./scripts/all.js',
+				'./sound/boom.mp3',
+				'./sound/boom.ogg',
+				'./sound/menu.mp3',
+				'./sound/menu.ogg',
+				'./sound/over.mp3',
+				'./sound/over.ogg',
+				'./sound/splatter.mp3',
+				'./sound/splatter.ogg',
+				'./sound/start.mp3',
+				'./sound/start.ogg',
+				'./sound/throw.mp3',
+				'./sound/throw.ogg'
+			]);
 			// 跳过等待，直接激活新SW
 			await self.skipWaiting();
 		} catch (error) {
@@ -94,7 +96,7 @@ self.addEventListener('activate', e => {
 		try {
 			// 删除非当前版本的缓存
 			await Promise.all(
-				(await caches.keys()).filter(n => n !== Ver).map(n => caches.delete(
+				(await caches.keys()).filter(n => n !== cName).map(n => caches.delete(
 					n))
 			);
 			// 立即控制所有页面
@@ -115,13 +117,12 @@ self.addEventListener('activate', e => {
 	})());
 });
 // 接收页面消息：触发SKIP_WAITING更新
-self.addEventListener('message', e => {
-	e.data === 'SKIP_WAITING' && self.skipWaiting();
-});
+self.addEventListener('message', e => e.data === 'SKIP_WAITING' && self.skipWaiting());
 // 拦截请求：缓存优先 + 离线支持 + 状态通知
 self.addEventListener('fetch', e => {
 	const req = e.request;
-	if (req.method !== 'GET') return;
+	// 只处理 GET 请求且只处理 HTTP/HTTPS 协议
+	if (req.method !== 'GET' || !req.url.startsWith('http')) return;
 	const accept = req.headers.get('accept');
 	// 判断是否为HTML页面请求
 	const isHTML = req.destination === 'document' || (accept && accept.includes('text/html'));
@@ -140,7 +141,6 @@ self.addEventListener('fetch', e => {
 					})).forEach(c => c.postMessage({
 						type: 'CACHE_STATUS',
 						status: 'HIT',
-						url: req.url,
 						version: Ver
 					}));
 				}, 500);
@@ -154,7 +154,6 @@ self.addEventListener('fetch', e => {
 				})).forEach(c => c.postMessage({
 					type: 'CACHE_STATUS',
 					status: 'MISS',
-					url: req.url,
 					version: Ver
 				}));
 			}, 500);
@@ -162,9 +161,11 @@ self.addEventListener('fetch', e => {
 			const networkRes = await fetch(req);
 			// 提前克隆响应，避免body重复使用
 			const cloneRes = networkRes.clone();
-			// 异步缓存资源，非有效响应，直接返回
-			if (networkRes && networkRes.status === 200 && networkRes.type === 'basic') caches
-				.open(Ver).then(cache => cache.put(req, cloneRes));
+			// 异步缓存资源，只缓存 HTTP/HTTPS 请求且有效响应
+			if (req.url.startsWith('http') && networkRes && networkRes.status === 200 &&
+				networkRes.type === 'basic') {
+				caches.open(cName).then(cache => cache.put(req, cloneRes));
+			}
 			return networkRes;
 		} catch (err) {
 			// 网络异常：离线模式处理
