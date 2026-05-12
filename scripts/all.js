@@ -79,7 +79,6 @@ define("scripts/gamepad.js", (exports) => {
 		cursorX = 320,
 		cursorY = 240,
 		isSlicing = false,
-		notificationElement = null,
 		cursorCircle = null,
 		cursorLineH = null,
 		cursorLineV = null,
@@ -88,7 +87,6 @@ define("scripts/gamepad.js", (exports) => {
 		message = require("scripts/message"),
 		state = require("scripts/state"),
 		layer = require("scripts/layer"),
-		timeline = require("scripts/timeline"),
 		CURSOR_SPEED = 10,
 		CURSOR_SPEED_BOOST = 25,
 		DEADZONE = 0.2;
@@ -104,17 +102,12 @@ define("scripts/gamepad.js", (exports) => {
 	};
 	// 显示/隐藏通知
 	const showNotification = (text) => {
-		if (notificationElement) notificationElement.remove();
-		notificationElement = layer.createText("gamepad", text, 320, 460, "#ffffff", "14px");
-		notificationElement.attr({
-			"text-anchor": "middle"
-		});
-		timeline.setTimeout(() => {
-			if (notificationElement) {
-				notificationElement.remove();
-				notificationElement = null;
-			}
-		}, 5000);
+		const el = document.getElementById('Status');
+		if (!el) return;
+		el.style.backgroundColor = '#ff8fed';
+		el.textContent = text;
+		el.style.display = 'block';
+		setTimeout(() => el.style.display = 'none', 5000);
 	};
 	// 创建十字光标
 	const createCursor = () => {
@@ -186,7 +179,7 @@ define("scripts/gamepad.js", (exports) => {
 			cursorY = 240;
 			createCursor();
 			updateCursorPosition();
-			showNotification("🎮 手柄已连接！摇杆移动，按键切割");
+			showNotification("🎮 手柄已连接");
 		}
 	};
 	// 手柄断开事件
@@ -8538,88 +8531,73 @@ if ('mediaSession' in navigator) {
 // 开始 Service Worker
 (async () => {
 	// 浏览器兼容性检测
-	if (!('serviceWorker' in navigator)) {
-		console.log('❌ 当前浏览器不支持 Service Worker');
-		return;
-	}
-	// 监听SW发送的消息
-	navigator.serviceWorker.addEventListener('message', (event) => {
-		if (!event.data) return;
-		// 缓存更新完成通知
-		if (event.data.type === 'CACHE_UPDATED') {
-			console.log('✨ PWA缓存已更新为版本:', event.data.version);
-			localStorage.removeItem('updateRejectedAt');
-			localStorage.removeItem('updateRejectedVersion');
-		}
-		// 缓存状态提示（命中/离线）
-		if (event.data.type === 'CACHE_STATUS') {
-			const {
-				status,
-				version
-			} = event.data, el = document.getElementById('Status');
-			if (!el) return;
-			const [message, color] = status === 'HIT' ? ['使用缓存加载', '#4caf50'] : 'MISS' ? [
-				'正在缓存资源', '#60b5ff'
-			] : ['离线模式', '#ff9800'];
-			el.style.backgroundColor = color;
-			el.textContent = message;
-			console.log(message + '，当前数据版本:' + version);
-			el.style.display = 'block';
-			setTimeout(() => el.style.display = 'none', 5000);
-		}
-	});
-	// 新SW激活后自动刷新页面
-	navigator.serviceWorker.addEventListener('controllerchange', () => {
-		window.location.reload();
-	});
-	try {
-		// 版本更新提示函数
-		const showUpdatePrompt = (worker) => {
-			if (confirm('检测到程序数据更新，请点击确定更新至最新数据！')) {
+	if ('serviceWorker' in navigator) {
+		// 监听SW发送的消息
+		navigator.serviceWorker.addEventListener('message', (event) => {
+			if (!event.data) return;
+			// 缓存更新完成通知
+			if (event.data.type === 'CACHE_UPDATED') console.log('✨ PWA缓存已更新为版本:', event.data.version);
+			// 缓存状态提示（命中/离线）
+			if (event.data.type === 'CACHE_STATUS') {
+				const {
+					status,
+					version
+				} = event.data, el = document.getElementById('Status');
+				if (!el) return;
+				const [message, color] = status === 'HIT' ? ['使用缓存加载', '#4caf50'] : 'MISS' ? [
+					'正在缓存资源', '#60b5ff'
+				] : ['离线模式', '#ff9800'];
+				el.style.backgroundColor = color;
+				el.textContent = message;
+				console.log(message + '，当前数据版本:' + version);
+				el.style.display = 'block';
+				setTimeout(() => el.style.display = 'none', 5000);
+			}
+		});
+		// 新SW激活后自动刷新页面
+		navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+		try {
+			// 版本更新提示函数
+			const showUpdatePrompt = (worker) => {
+				alert('🟢 检测到云端数据差异：\n🎉 有新版数据可用，程序即将自动重启！');
 				try {
 					worker.postMessage('SKIP_WAITING');
-					alert('正在更新，请稍候...'); // 防止用户多次点击
 				} catch (err) {
 					console.error('❌ 发送更新消息失败:', err);
 					window.location.reload();
 				}
-			} else {
-				// 记录拒绝时间和版本号，24小时内不再提示同一版本
-				localStorage.setItem('updateRejectedAt', Date.now().toString());
-				localStorage.setItem('updateRejectedVersion', worker.scriptURL);
+			};
+			// 注册Service Worker
+			const registration = await navigator.serviceWorker.register('./sw.js');
+			console.log('✅ Service Worker 注册成功:', registration.scope);
+			// 处理已存在的待激活版本
+			if (registration.waiting) {
+				console.log('🎉 已有新版本等待激活！');
+				const lastRejected = localStorage.getItem('updateRejectedAt');
+				const isSameVersion = localStorage.getItem('updateRejectedVersion') === registration.waiting
+					.scriptURL;
+				if (!lastRejected || !isSameVersion || Date.now() - parseInt(lastRejected) > 86400000)
+					showUpdatePrompt(registration.waiting);
 			}
-		};
-		// 注册Service Worker
-		const registration = await navigator.serviceWorker.register('./sw.js', {
-			scope: './'
-		});
-		console.log('✅ Service Worker 注册成功:', registration.scope);
-		// 处理已存在的待激活版本
-		if (registration.waiting) {
-			console.log('🎉 已有新版本等待激活！');
-			const lastRejected = localStorage.getItem('updateRejectedAt');
-			const isSameVersion = localStorage.getItem('updateRejectedVersion') === registration.waiting
-				.scriptURL;
-			if (!lastRejected || !isSameVersion || Date.now() - parseInt(lastRejected) > 86400000) {
-				showUpdatePrompt(registration.waiting);
-			}
-		}
-		// 监听新版本发现
-		registration.addEventListener('updatefound', () => {
-			const newWorker = registration.installing;
-			console.log('🔄 发现新版本！');
-			newWorker.addEventListener('statechange', () => {
-				if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-					console.log('🎉 新版本已准备好！');
-					showUpdatePrompt(newWorker);
-				}
-			}, {
-				once: true
+			// 监听新版本发现
+			registration.addEventListener('updatefound', () => {
+				const newWorker = registration.installing;
+				console.log('🔄 发现新版本！');
+				newWorker.addEventListener('statechange', () => {
+					if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+						console.log('🎉 新版本已准备好！');
+						showUpdatePrompt(newWorker);
+					}
+				}, {
+					once: true
+				});
 			});
-		});
-		return registration;
-	} catch (error) {
-		console.log('❌ Service Worker 注册失败:', error);
+			return registration;
+		} catch (error) {
+			console.log('❌ Service Worker 注册失败:', error);
+		}
+	} else {
+		console.log('❌ 当前浏览器不支持 Service Worker');
 	}
 })();
 // 触发锁：确保点击/触摸只执行一次

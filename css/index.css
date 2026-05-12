@@ -91,7 +91,7 @@ body {
 	font-family: Arial, sans-serif;
 	font-size: 18px;
 	z-index: 99;
-	animation: fadeInOut 4s ease-out forwards;
+	animation: fadeInOut 5s ease-in-out forwards;
 }
 
 /* googleAD未载入 */
