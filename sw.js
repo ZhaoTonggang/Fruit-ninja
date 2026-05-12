@@ -1,6 +1,6 @@
 'use strict';
 // 版本
-const Ver = 1778566617,
+const Ver = 1778585761,
 	cName = 'PWA-';
 // 安装：缓存资源 + 立即激活
 self.addEventListener('install', e => {
