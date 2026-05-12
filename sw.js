@@ -1,13 +1,13 @@
 'use strict';
 // 版本
-const Ver = 1778483320,
-	cName = 'PWA-' + Ver;
+const Ver = 1778566617,
+	cName = 'PWA-';
 // 安装：缓存资源 + 立即激活
 self.addEventListener('install', e => {
 	e.waitUntil((async () => {
 		try {
 			// 打开缓存并缓存所有资源
-			await (await caches.open(cName)).addAll([
+			await (await caches.open(cName + Ver)).addAll([
 				'./',
 				'./404.html',
 				'./css/index.css',
@@ -95,10 +95,8 @@ self.addEventListener('activate', e => {
 	e.waitUntil((async () => {
 		try {
 			// 删除非当前版本的缓存
-			await Promise.all(
-				(await caches.keys()).filter(n => n !== cName).map(n => caches.delete(
-					n))
-			);
+			await Promise.all((await caches.keys()).filter(n => n.startsWith(cName)).map(n =>
+				caches.delete(n)));
 			// 立即控制所有页面
 			await self.clients.claim();
 			// 向页面发送缓存更新消息
@@ -163,9 +161,8 @@ self.addEventListener('fetch', e => {
 			const cloneRes = networkRes.clone();
 			// 异步缓存资源，只缓存 HTTP/HTTPS 请求且有效响应
 			if (req.url.startsWith('http') && networkRes && networkRes.status === 200 &&
-				networkRes.type === 'basic') {
-				caches.open(cName).then(cache => cache.put(req, cloneRes));
-			}
+				networkRes.type === 'basic') caches.open(cName + Ver).then(cache => cache.put(
+				req, cloneRes));
 			return networkRes;
 		} catch (err) {
 			// 网络异常：离线模式处理
