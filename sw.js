@@ -1,6 +1,6 @@
 'use strict';
 // 版本
-const Ver = 1778585761,
+const Ver = 1778841419,
 	cName = 'PWA-';
 // 安装：缓存资源 + 立即激活
 self.addEventListener('install', e => {
@@ -121,9 +121,21 @@ self.addEventListener('fetch', e => {
 	const req = e.request;
 	// 只处理 GET 请求且只处理 HTTP/HTTPS 协议
 	if (req.method !== 'GET' || !req.url.startsWith('http')) return;
-	const accept = req.headers.get('accept');
 	// 判断是否为HTML页面请求
-	const isHTML = req.destination === 'document' || (accept && accept.includes('text/html'));
+	const accept = req.headers.get('accept'),
+		isHTML = req.destination === 'document' || (accept && accept.includes('text/html')),
+		postMess = async (t, s) => {
+			setTimeout(async () => {
+				(await self.clients.matchAll({
+					includeUncontrolled: 1,
+					type: 'window'
+				})).forEach(c => c.postMessage({
+					type: t,
+					status: s,
+					version: Ver
+				}));
+			}, 1000)
+		};
 	e.respondWith((async () => {
 		try {
 			// 读取缓存
@@ -132,52 +144,24 @@ self.addEventListener('fetch', e => {
 			});
 			if (cacheRes) {
 				// HTML请求：延迟发送缓存命中消息
-				isHTML && setTimeout(async () => {
-					(await self.clients.matchAll({
-						includeUncontrolled: 1,
-						type: 'window'
-					})).forEach(c => c.postMessage({
-						type: 'CACHE_STATUS',
-						status: 'HIT',
-						version: Ver
-					}));
-				}, 500);
+				if (isHTML) await postMess('CACHE_STATUS', 'HIT');
 				return cacheRes;
 			}
 			// HTML请求：延迟发送缓存命中消息
-			isHTML && setTimeout(async () => {
-				(await self.clients.matchAll({
-					includeUncontrolled: 1,
-					type: 'window'
-				})).forEach(c => c.postMessage({
-					type: 'CACHE_STATUS',
-					status: 'MISS',
-					version: Ver
-				}));
-			}, 500);
+			if (isHTML) await postMess('CACHE_STATUS', 'MISS');
 			// 缓存未命中，请求网络
 			const networkRes = await fetch(req);
 			// 提前克隆响应，避免body重复使用
 			const cloneRes = networkRes.clone();
 			// 异步缓存资源，只缓存 HTTP/HTTPS 请求且有效响应
-			if (req.url.startsWith('http') && networkRes && networkRes.status === 200 &&
-				networkRes.type === 'basic') caches.open(cName + Ver).then(cache => cache.put(
-				req, cloneRes));
+			if (networkRes && networkRes.status === 200 && networkRes.type === 'basic') caches
+				.open(cName + Ver).then(cache => cache.put(req, cloneRes));
 			return networkRes;
 		} catch (err) {
 			// 网络异常：离线模式处理
 			if (isHTML) {
 				// 发送离线状态消息
-				setTimeout(async () => {
-					(await self.clients.matchAll({
-						includeUncontrolled: 1,
-						type: 'window'
-					})).forEach(c => c.postMessage({
-						type: 'CACHE_STATUS',
-						status: 'OFFLINE',
-						version: Ver
-					}));
-				}, 500);
+				await postMess('CACHE_STATUS', 'OFFLINE');
 				// 返回离线页面
 				return await caches.match('./index.html') ?? new Response(
 					'离线模式：无法加载页面', {
