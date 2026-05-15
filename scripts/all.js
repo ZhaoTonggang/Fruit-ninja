@@ -1053,7 +1053,13 @@ define("scripts/sence.js", function(exports) {
 	exports.hideMenu = function(callback) {
 		[newSign, dojo, newGame, quit].invoke("hide");
 		[homeMask, logo, ninja, homeDesc].invoke("hide");
-		[peach, sandia, boom].invoke("fallOff", 150);
+		// 彻底清理首页水果对象，停止所有无限动画
+		[peach, sandia, boom].forEach(function(f) {
+			if (f && f.destroy) {
+				f.destroy();
+			}
+		});
+		peach = sandia = boom = null;
 		menuSnd.stop();
 		setTimeout(callback, fruit.getDropTimeSetting());
 	};
@@ -1287,6 +1293,17 @@ define("scripts/timeline.js", function(exports) {
 			this.count = 0,
 			this.startTime = t;
 		return fps;
+	};
+	/**
+	 * 清理所有任务
+	 */
+	exports.clearAll = function() {
+		for (var i = tasks.length - 1; i >= 0; i--) {
+			tasks[i].stop && tasks[i].stop();
+			tasks.splice(i, 1);
+		}
+		addingTasks.length = 0;
+		adding = 0;
 	};
 	/**
 	 * @private
@@ -1596,6 +1613,22 @@ define("scripts/factory/fruit.js", function(exports) {
 		this.anims.clear();
 		if (this.type == "boom")
 			this.flame.remove();
+	};
+	ClassFruit.prototype.destroy = function() {
+		this.anims.clear();
+		if (this.image)
+			this.image.remove();
+		if (this.shadow)
+			this.shadow.remove();
+		if (this.bImage1)
+			this.bImage1.remove();
+		if (this.bImage2)
+			this.bImage2.remove();
+		if (this.type == "boom" && this.flame)
+			this.flame.remove();
+		var index;
+		if ((index = fruitCache.indexOf(this)) > -1)
+			fruitCache.splice(index, 1);
 	};
 	// 分开
 	ClassFruit.prototype.apart = function(angle) {
@@ -7808,28 +7841,41 @@ define("scripts/object/flame.js", function(exports) {
 			pos: function(x, y) {
 				nx = x;
 				ny = y;
-				image.attr("x", nx - 21).attr("y", ny - 21);
+				image && image.attr("x", nx - 21).attr("y", ny - 21);
 			},
 			remove: function() {
-				[timer1, timer2].invoke("stop");
-				image.remove();
-				for (var p in flames)
+				if (timer1) timer1.stop && timer1.stop();
+				if (timer2) timer2.stop && timer2.stop();
+				timer1 = timer2 = null;
+				if (image) {
+					image.remove();
+					image = null;
+				}
+				for (var p in flames) {
 					removeFlame(flames, p);
+				}
+				flames = {};
+				guid = 0;
 			}
 		};
 		var nx = ox,
 			ny = oy;
 		var image = layer.image("images/smoke.png", nx - 21, ny - 21, 43, 43).hide();
 		var flames = {};
+		// 优化：减少火焰生成频率，提高性能
+		var flameInterval = Ucren.isIe ? 20 : 40;
 		timer1 = timeline.setTimeout(function() {
+			if (!image) return;
 			image.show();
 			timer2 = timeline.setInterval(function() {
+				if (!image) return;
+				// 减少火焰生成概率，降低性能消耗
 				if (random() < 0.9)
 					appendFlame([nx, ny], PI * 2 * random(), 60, 200 + 500 * random(),
 						flames);
 				for (var p in flames)
 					updateFlame(flames, p);
-			}, Ucren.isIe ? 20 : 40);
+			}, flameInterval);
 		}, start || 0);
 		return object;
 	};
@@ -8037,7 +8083,7 @@ define("scripts/object/knife.js", function(exports) {
 	ClassKnifePart.prototype.end = function() {
 		this.line.remove();
 		var index;
-		if (index = knifes.indexOf(this))
+		if ((index = knifes.indexOf(this)) > -1)
 			knifes.splice(index, 1);
 	};
 	exports.newKnife = function() {
@@ -8531,7 +8577,11 @@ if ('mediaSession' in navigator) {
 // 开始 Service Worker
 (async () => {
 	// 浏览器兼容性检测
-	if ('serviceWorker' in navigator) {
+	if (!('serviceWorker' in navigator)) {
+		console.log('❌ 当前浏览器不支持 Service Worker');
+		return;
+	}
+	try {
 		// 监听SW发送的消息
 		navigator.serviceWorker.addEventListener('message', (event) => {
 			if (!event.data) return;
@@ -8556,48 +8606,42 @@ if ('mediaSession' in navigator) {
 		});
 		// 新SW激活后自动刷新页面
 		navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-		try {
-			// 版本更新提示函数
-			const showUpdatePrompt = (worker) => {
-				alert('🟢 检测到云端数据差异：\n🎉 有新版数据可用，程序即将自动重启！');
-				try {
-					worker.postMessage('SKIP_WAITING');
-				} catch (err) {
-					console.error('❌ 发送更新消息失败:', err);
-					window.location.reload();
-				}
-			};
-			// 注册Service Worker
-			const registration = await navigator.serviceWorker.register('./sw.js');
-			console.log('✅ Service Worker 注册成功:', registration.scope);
-			// 处理已存在的待激活版本
-			if (registration.waiting) {
-				console.log('🎉 已有新版本等待激活！');
-				const lastRejected = localStorage.getItem('updateRejectedAt');
-				const isSameVersion = localStorage.getItem('updateRejectedVersion') === registration.waiting
-					.scriptURL;
-				if (!lastRejected || !isSameVersion || Date.now() - parseInt(lastRejected) > 86400000)
-					showUpdatePrompt(registration.waiting);
+		// 版本更新提示函数
+		const showUpdatePrompt = (worker) => {
+			alert('🟢 检测到云端数据差异：\n🎉 有新版数据可用，程序即将自动重启！');
+			try {
+				worker.postMessage('SKIP_WAITING');
+			} catch (err) {
+				console.error('❌ 发送更新消息失败:', err);
+				window.location.reload();
 			}
-			// 监听新版本发现
-			registration.addEventListener('updatefound', () => {
-				const newWorker = registration.installing;
-				console.log('🔄 发现新版本！');
-				newWorker.addEventListener('statechange', () => {
-					if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-						console.log('🎉 新版本已准备好！');
-						showUpdatePrompt(newWorker);
-					}
-				}, {
-					once: true
-				});
-			});
-			return registration;
-		} catch (error) {
-			console.log('❌ Service Worker 注册失败:', error);
+		};
+		// 注册Service Worker
+		const registration = await navigator.serviceWorker.register('./sw.js', {
+			updateViaCache: 'none'
+		});
+		console.log('✅ Service Worker 注册成功:', registration.scope);
+		// 处理已存在的待激活版本
+		if (registration.waiting) {
+			console.log('🎉 已有新版本等待激活！');
+			showUpdatePrompt(registration.waiting);
 		}
-	} else {
-		console.log('❌ 当前浏览器不支持 Service Worker');
+		// 监听新版本发现
+		registration.addEventListener('updatefound', () => {
+			const newWorker = registration.installing;
+			console.log('🔄 发现新版本！');
+			newWorker.addEventListener('statechange', () => {
+				if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+					console.log('🎉 新版本已准备好！');
+					showUpdatePrompt(newWorker);
+				}
+			}, {
+				once: true
+			});
+		});
+		return registration;
+	} catch (error) {
+		console.log('❌ Service Worker 注册失败:', error);
 	}
 })();
 // 触发锁：确保点击/触摸只执行一次
