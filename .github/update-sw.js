@@ -46,10 +46,11 @@ try {
 		`const Ver = ${newVersion},`
 	);
 	// 更新资源列表 - 找到 addAll 数组并替换，匹配 addAll([...]) 部分
-	const addAllRegex = /await \(\s*await\s+caches\.open\(Ver\)\s*\)\.addAll\(\s*\[([\s\S]*?)\]\s*\);/;
+	const addAllRegex = /await \(\s*await\s+caches\.open\(cName \+ Ver\)\s*\)\.addAll\(\s*\[([\s\S]*?)\]\s*\);/;
 	// 生成新的资源列表字符串
 	if (swContent.match(addAllRegex)) swContent = swContent.replace(addAllRegex,
-		`await (await caches.open(Ver)).addAll([\n${files.map(file => `\t\t\t'${file}'`).join(',\n')}\n\t\t]);`);
+		`await (await caches.open(cName + Ver)).addAll([\n${files.map(file => `\t\t\t'${file}'`).join(',\n')}\n\t\t]);`
+		);
 	// 写回 sw.js
 	fs.writeFileSync(swPath, swContent, 'utf8');
 	console.log('✅ sw.js 已更新');
