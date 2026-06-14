@@ -5,6 +5,7 @@
 	margin: 0;
 	touch-action: none;
 	box-sizing: border-box;
+	font-family: YouYuan, Yuanti SC, KaiTi, Arial, sans-serif;
 }
 
 body {
@@ -88,7 +89,6 @@ body {
 	color: #fff;
 	padding: 8px;
 	border-radius: 4px;
-	font-family: Arial, sans-serif;
 	font-size: 18px;
 	z-index: 99;
 	animation: fadeInOut 5s ease-in-out forwards;

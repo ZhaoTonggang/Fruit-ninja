@@ -84,15 +84,15 @@
 		"label": "游戏 水果忍者",
 		"platform": "网页(WEB)"
 	}, {
-		"src": "./images/screenshots/1.png",
-		"sizes": "2564x1444",
+		"src": "./images/screenshots/m1.png",
+		"sizes": "430x932",
 		"type": "image/png",
 		"form_factor": "narrow",
 		"label": "游戏 水果忍者",
 		"platform": "网页(WEB)"
 	}, {
-		"src": "./images/screenshots/2.png",
-		"sizes": "2564x1444",
+		"src": "./images/screenshots/m2.png",
+		"sizes": "430x932",
 		"type": "image/png",
 		"form_factor": "narrow",
 		"label": "游戏 水果忍者",

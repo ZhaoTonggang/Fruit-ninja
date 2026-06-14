@@ -8594,9 +8594,8 @@ if ('mediaSession' in navigator) {
 					version
 				} = event.data, el = document.getElementById('Status');
 				if (!el) return;
-				const [message, color] = status === 'HIT' ? ['使用缓存加载', '#4caf50'] : 'MISS' ? [
-					'正在缓存资源', '#60b5ff'
-				] : ['离线模式', '#ff9800'];
+				const [message, color] = status === 'HIT' ? ['使用缓存加载', '#4caf50'] : status ===
+					'MISS' ? ['正在缓存资源', '#60b5ff'] : ['离线模式', '#ff9800'];
 				el.style.backgroundColor = color;
 				el.textContent = message;
 				console.log(message + '，当前数据版本:' + version);
@@ -8605,7 +8604,11 @@ if ('mediaSession' in navigator) {
 			}
 		});
 		// 新SW激活后自动刷新页面
-		navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+		let isFirstInstall = true;
+		navigator.serviceWorker.addEventListener('controllerchange', () => {
+			if (!isFirstInstall) window.location.reload();
+			isFirstInstall = false;
+		});
 		// 版本更新提示函数
 		const showUpdatePrompt = (worker) => {
 			alert('🟢 检测到云端数据差异：\n🎉 有新版数据可用，程序即将自动重启！');
@@ -8639,7 +8642,6 @@ if ('mediaSession' in navigator) {
 				once: true
 			});
 		});
-		return registration;
 	} catch (error) {
 		console.log('❌ Service Worker 注册失败:', error);
 	}
